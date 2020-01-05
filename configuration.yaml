@@ -1,0 +1,77 @@
+# Add this lines to configuration.yaml to get and send data to<F2>from Tion S3 device
+# It will create FAN device that will allow yu to change speed and turn on<F2>off device
+# Also it will create set of sensors, related to tion device.
+
+fan:
+  - platform: template
+    fans:
+      tion:
+        friendly_name: "Tion"
+        value_template: "{{ states('sensor.tion_status') }}"
+        speed_template: "{{ states('sensor.tion_fan_speed') }}"
+        turn_on:
+          service: rest_command.fan_on
+        turn_off:
+          service: rest_command.fan_off
+        set_speed:
+          service: rest_command.fan_speed
+          data_template:
+            speed: "{{ speed }}"
+        speeds:
+          - '1'
+          - '2'
+          - '3'
+          - '4'
+          - '5'
+          - '6'
+rest_command:
+  fan_on:
+    url:  http://127.0.0.1:8008/s3/PUT:MAC:HERE
+    method: POST
+    payload: '{ "status": "on" }'
+  fan_off:
+    url:  http://127.0.0.1:8008/s3/PUT:MAC:HERE
+    method: POST
+    payload: '{ "status": "off" }'
+  fan_speed:
+    url:  http://127.0.0.1:8008/s3/PUT:MAC:HERE
+    method: POST
+    payload: '{"fan_speed": {{speed}} }'
+sensor:
+  - platform: rest
+    resource: http://127.0.0.1:8008/s3/PUT:MAC:HERE
+    method: GET
+    name: tion
+    json_attributes:
+      - heater
+      - status
+      - mode
+      - fan_speed
+      - heater_temp
+      - in_temp
+    value_template: '{{ value_json.status }}'
+  - platform: template
+    sensors:
+      tion_heater_status:
+        friendly_name: 'tion_heater'
+        value_template: '{{ states.sensor.tion.attributes["heater"] }}'
+      tion_status:
+        friendly_name: 'tion_status'
+        value_template: '{{ states.sensor.tion.attributes["status"] }}'
+      tion_mode:
+        friendly_name: 'tion_mode'
+        value_template: '{{ states.sensor.tion.attributes["mode"] }}'
+      tion_fan_speed:
+        friendly_name: 'tion_fan_speed'
+        value_template: >-
+          {% if is_state('sensor.tion_status', 'on') %} 
+            {{ states.sensor.tion.attributes["fan_speed"] }}
+          {% else %}
+            {{ states.sensor.tion.attributes["fan_speed"] }}
+          {% endif %}
+      tion_heater_temp:
+        friendly_name: 'tion_heater_temp'
+        value_template: '{{ states.sensor.tion.attributes["heater_temp"] }}'
+      tion_in_temp:
+        friendly_name: 'tion_in_temp'
+        value_template: '{{ states.sensor.tion.attributes["in_temp"] }}'
