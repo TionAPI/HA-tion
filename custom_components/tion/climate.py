@@ -87,6 +87,11 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         ]
     )
 
+class TionException(Exception):
+    def __init__(self, expression, message):
+        self.expression = expression
+        self.message = message
+
 class Tion(ClimateEntity, RestoreEntity):
     """Representation of a Tion device."""
     uuid = "6e400001-b5a3-f393-e0a9-e50e24dcca9e"
@@ -365,11 +370,20 @@ class Tion(ClimateEntity, RestoreEntity):
                 tries += 1
                 _LOGGER.warning("Got exception while " + action.__name__ + ": " + str(e))
                 pass
+        else:
+            if action.__name__ == '_connect':
+                message = "Could not connect to " + self._mac
+            elif action.__name__ == '__try_notify_read':
+                message = "Could not read from " + str(self.notify.uuid)
+            elif action.__name__ == '__try_write':
+                message = "Could not write request + " + kwargs['request'].hex()
+            elif action.__name__ == '__try_get_state':
+                message = "Could not get updated state"
+            else: message = "Could not do " + action.__name__
 
-        result = True if tries < max_tries else False
-        if action.__name__ not in [ "_connect", "_notify_read", "_write_request" ]:
-            result = (result, response)
-        return result
+            raise TionException(action.__name__, message)
+
+        return response
 
     def create_command(self, command: int) -> bytearray:
         return bytearray([
@@ -422,27 +436,27 @@ class Tion(ClimateEntity, RestoreEntity):
     async def _async_update_state(self, time=None, force: bool = False, keep_connection: bool = False) -> dict:
         _LOGGER.debug("Update fired force = " + str(force) + ". Keep connection is " + str(keep_connection))
         response = {}
-        if self._do_action(self._connect):
-            if self._do_action(self.__try_notify_read):
-                request: bytearray = self._get_status_command()
-                if self._do_action(self.__try_write, request = request):
-                    state, response = self._do_action(self.__try_get_state)
-                    if state:
-                        if not keep_connection:
-                            self._btle.disconnect()
+        try:
+            self._do_action(self._connect)
+            self._do_action(self.__try_notify_read)
+            self._do_action(self.__try_write, request=self._get_status_command())
+            response = self._do_action(self.__try_get_state)
 
-                        _LOGGER.debug("Got response from device: " + response.hex())
-                        response = self._decode_response(response)
-                        self._cur_temp = response["out_temp"]
-                        self._target_temp = response["heater_temp"]
-                        self._is_on = response["is_on"]
-                        self._heater = response["heater"]
-                        self._fan_speed = response["fan_speed"]
-                        self.async_write_ha_state()
-                    else: _LOGGER.error("Could not get updated state")
-                else: _LOGGER.error("Could not write request + " + request.hex())
-            else: _LOGGER.error("Could not read from " + str(self.notify.uuid))
-        else: _LOGGER.error("Could not connect to " + self._mac)
+            _LOGGER.debug("Got response from device: " + response.hex())
+            response = self._decode_response(response)
+            self._cur_temp = response["out_temp"]
+            self._target_temp = response["heater_temp"]
+            self._is_on = response["is_on"]
+            self._heater = response["heater"]
+            self._fan_speed = response["fan_speed"]
+            self.async_write_ha_state()
+
+        except TionException as e:
+            _LOGGER.error(str(e))
+
+        finally:
+            if not keep_connection:
+                self._btle.disconnect()
 
         return response
 
