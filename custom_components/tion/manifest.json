@@ -1,0 +1,8 @@
+{
+  "domain": "tion",
+  "name": "Tion breezer",
+  "documentation": "https://github.com/TionAPI/HA-tion/wiki",
+  "dependencies": [ "fan" ],
+  "requirements": [ "bluepy" ],
+  "codeowners": [ "@IATkachenko" ]
+}
