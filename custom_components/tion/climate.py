@@ -3,6 +3,7 @@ import asyncio
 import logging
 from bluepy import btle
 from typing import Tuple, Callable
+from tion import s3 as tion
 
 import voluptuous as vol
 
@@ -143,9 +144,7 @@ class Tion(ClimateEntity, RestoreEntity):
         self._hvac_list = list(self._hvac_mapping.keys())
         self._fan_speed = 1
         #tion part
-        self._btle = btle.Peripheral(None)
-        self._mac = mac
-
+        self._tion = tion(mac)
 
 
     async def async_added_to_hass(self):
@@ -332,131 +331,21 @@ class Tion(ClimateEntity, RestoreEntity):
     async def async_set_fan_mode(self, fan_mode):
         await self._async_set_state(fan_speed=fan_mode, is_on=True)
 
-    def _connect(self):
-        try:
-            connection_status = self._btle.getState()
-        except btle.BTLEInternalError as e:
-            if str(e) == "Helper not started (did you call connect()?)":
-                connection_status = "disc"
-            else:
-                _LOGGER.error("Got exception '" + str(e) + "'")
-                raise e
-        except BrokenPipeError as e:
-            connection_status = "disc"
-            self._btle = btle.Peripheral(None)
-            _LOGGER.error("Got exception '" + str(e) + "'")
-
-        if connection_status == "disc":
-            self._btle.connect(self._mac, btle.ADDR_TYPE_RANDOM)
-            for tc in self._btle.getCharacteristics():
-                if tc.uuid == self.uuid_notify:
-                    self.notify = tc
-                if tc.uuid == self.uuid_write:
-                    self.write = tc
-
-    def _do_action(self, action: Callable, max_tries: int = 3, *args, **kwargs):
-        tries: int = 0
-        response = None
-
-        while tries < max_tries:
-            _LOGGER.debug("Doing " + action.__name__ + ". Attempt " + str(tries+1) + "/" + str(max_tries))
-            try:
-                if action.__name__ != '_connect':
-                    self._connect()
-
-                response = action(*args, **kwargs)
-                break
-            except Exception as e:
-                tries += 1
-                _LOGGER.warning("Got exception while " + action.__name__ + ": " + str(e))
-                pass
-        else:
-            if action.__name__ == '_connect':
-                message = "Could not connect to " + self._mac
-            elif action.__name__ == '__try_notify_read':
-                message = "Could not read from " + str(self.notify.uuid)
-            elif action.__name__ == '__try_write':
-                message = "Could not write request + " + kwargs['request'].hex()
-            elif action.__name__ == '__try_get_state':
-                message = "Could not get updated state"
-            else: message = "Could not do " + action.__name__
-
-            raise TionException(action.__name__, message)
-
-        return response
-
-    def create_command(self, command: int) -> bytearray:
-        return bytearray([
-            self._commands['prefix'], command, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,self._commands['suffix']
-        ])
-
-    def _get_status_command(self) -> bytearray:
-        return self.create_command(self._commands['REQUEST_PARAMS'])
-
-    def _decode_response(self, response: bytearray) -> dict:
-        def _process_status(code: int) -> bool:
-            return True if code == 1 else False
-
-        def _process_mode(mode_code: int) -> str:
-            modes = [ 'recirculation', 'mixed', 'street' ]
-            mode = 'street'
-            try:
-                mode = modes[mode_code]
-            except IndexError:
-                pass
-            return mode
-
-        result = {}
-        try:
-            result = {
-                "heater": _process_status(response[4] & 1),
-                "is_on": _process_status(response[4] >> 1 & 1),
-                "sound": _process_status(response[4] >> 3 & 1),
-                "mode": _process_mode(int(list("{:02x}".format(response[2]))[0])),
-                "fan_speed": int(list("{:02x}".format(response[2]))[1]),
-                "heater_temp": response[3],
-                "in_temp": response[8],
-                "out_temp": response[7],
-                "filter_remain": response[10] * 256 + response[9],
-                "time": "{}:{}".format(response[11], response[12]),
-                "request_error_code": response[13],
-                "fw_version": "{:02x}{:02x}".format(response[16], response[17])
-            }
-        except IndexError as e:
-            result = {
-                "error": "Got bad response from Tion '%s': %s while parsing" % (response, str(e))
-            }
-        finally:
-            return result
-
-    def __try_notify_read(self): return self.notify.read()
-    def __try_write(self, request: bytearray): return self.write.write(request)
-    def __try_get_state(self) -> bytearray: return self._btle.getServiceByUUID(self.uuid).getCharacteristics()[0].read()
 
     async def _async_update_state(self, time=None, force: bool = False, keep_connection: bool = False) -> dict:
+        def decode_state(state:str) -> bool:
+            return True if state == "on" else False
+
         _LOGGER.debug("Update fired force = " + str(force) + ". Keep connection is " + str(keep_connection))
-        response = {}
-        try:
-            self._do_action(self._connect)
-            self._do_action(self.__try_notify_read)
-            self._do_action(self.__try_write, request=self._get_status_command())
-            response = self._do_action(self.__try_get_state)
 
-            _LOGGER.debug("Got response from device: " + response.hex())
-            response = self._decode_response(response)
-            self._cur_temp = response["out_temp"]
-            self._target_temp = response["heater_temp"]
-            self._is_on = response["is_on"]
-            self._heater = response["heater"]
-            self._fan_speed = response["fan_speed"]
-            self.async_write_ha_state()
+        response = self._tion.get(keep_connection)
 
-        except TionException as e:
-            _LOGGER.error(str(e))
-
-        finally:
-            if not keep_connection:
-                self._btle.disconnect()
+        self._cur_temp = response["out_temp"]
+        self._target_temp = response["heater_temp"]
+        self._is_on = decode_state(response["status"])
+        self._heater = decode_state(response["heater"])
+        self._fan_speed = response["fan_speed"]
+        self.async_write_ha_state()
 
         return response
 
@@ -467,25 +356,15 @@ class Tion(ClimateEntity, RestoreEntity):
         def _encode_mode(mode: str) -> int:
             modes = ['recirculation', 'mixed', 'street']
             return modes.index(mode) if mode in modes else 2
+        if "is_on" in kwargs:
+            kwargs["status"] = "on" if kwargs["is_on"] else "off"
+            del kwargs["is_on"]
+        if "heater" in kwargs:
+            kwargs["heater"] = "on" if kwargs["heater"] else "off"
+        if "fan_speed" in kwargs:
+            kwargs["fan_speed"] = int(kwargs["fan_speed"])
 
         args = ', '.join('%s=%r' % x for x in kwargs.items())
         _LOGGER.info("Need to set: " + args)
-
-        current_settings = await self._async_update_state(force=True, keep_connection=True)
-        if bool(current_settings):
-            settings = {**current_settings, **kwargs}
-
-            new_settings = self.create_command(self._commands['SET_PARAMS'])
-            new_settings[2] = int(settings["fan_speed"])
-            new_settings[3] = int(settings["heater_temp"])
-            new_settings[4] = _encode_mode(settings["mode"])
-            new_settings[5] = _encode_status(settings["heater"]) | (_encode_status(settings["is_on"]) << 1) | (
-                    _encode_status(settings["sound"]) << 3)
-
-            self.notify.read()
-            self.write.write(new_settings)
-            await self._async_update_state(force=True, keep_connection=True)
-            self._btle.disconnect()
-            self.async_write_ha_state()
-        else:
-            _LOGGER.error("Got empty response from _async_update_state")
+        self._tion.set(kwargs)
+        await self._async_update_state(force=True, keep_connection=True)

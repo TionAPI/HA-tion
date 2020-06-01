@@ -2,7 +2,14 @@
   "domain": "tion",
   "name": "Tion breezer",
   "documentation": "https://github.com/TionAPI/HA-tion/wiki",
-  "dependencies": [ "fan" ],
-  "requirements": [ "bluepy" ],
-  "codeowners": [ "@IATkachenko" ]
+  "dependencies": [
+    "fan"
+  ],
+  "requirements": [
+    "bluepy",
+    "https://github.com/TionAPI/tion_python.git@dev#tion==1.0.0"
+  ],
+  "codeowners": [
+    "@IATkachenko"
+  ]
 }
