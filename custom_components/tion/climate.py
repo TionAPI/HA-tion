@@ -350,12 +350,6 @@ class Tion(ClimateEntity, RestoreEntity):
         return response
 
     async def _async_set_state(self, **kwargs):
-        def _encode_status(status: bool) -> int:
-            return 1 if status else 0
-
-        def _encode_mode(mode: str) -> int:
-            modes = ['recirculation', 'mixed', 'street']
-            return modes.index(mode) if mode in modes else 2
         if "is_on" in kwargs:
             kwargs["status"] = "on" if kwargs["is_on"] else "off"
             del kwargs["is_on"]
