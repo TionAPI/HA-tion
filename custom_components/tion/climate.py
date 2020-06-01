@@ -361,4 +361,4 @@ class Tion(ClimateEntity, RestoreEntity):
         args = ', '.join('%s=%r' % x for x in kwargs.items())
         _LOGGER.info("Need to set: " + args)
         self._tion.set(kwargs)
-        await self._async_update_state(force=True, keep_connection=True)
+        await self._async_update_state(force=True, keep_connection=False)
