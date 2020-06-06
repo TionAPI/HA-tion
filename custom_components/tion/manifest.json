@@ -7,7 +7,7 @@
   ],
   "requirements": [
     "bluepy",
-    "https://github.com/TionAPI/tion_python.git@dev#tion==1.0.0"
+    "https://github.com/TionAPI/tion_python.git@lite#tion==1.0.0"
   ],
   "codeowners": [
     "@IATkachenko"

@@ -143,6 +143,7 @@ class Tion(ClimateEntity, RestoreEntity):
         }
         self._hvac_list = list(self._hvac_mapping.keys())
         self._fan_speed = 1
+        self._is_heating: bool = False
         #tion part
         self._tion = tion(mac)
 
@@ -234,9 +235,13 @@ class Tion(ClimateEntity, RestoreEntity):
         """Return the current running hvac operation if supported.
         Need to be one of CURRENT_HVAC_*.
         """
-        try:
-            current_hvac_operation = self._hvac_mapping[self._hvac_mode]
-        except KeyError as e:
+
+        if self._is_on:
+            if self._is_heating:
+                current_hvac_operation = CURRENT_HVAC_HEAT
+            else:
+                current_hvac_operation = CURRENT_HVAC_FAN
+        else:
             current_hvac_operation = CURRENT_HVAC_OFF
         return current_hvac_operation
 
@@ -345,6 +350,7 @@ class Tion(ClimateEntity, RestoreEntity):
         self._is_on = decode_state(response["status"])
         self._heater = decode_state(response["heater"])
         self._fan_speed = response["fan_speed"]
+        self._is_heating = decode_state(response["is_heating"])
         self.async_write_ha_state()
 
         return response
