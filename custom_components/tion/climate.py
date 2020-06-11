@@ -95,18 +95,7 @@ class TionException(Exception):
 
 class Tion(ClimateEntity, RestoreEntity):
     """Representation of a Tion device."""
-    uuid = "6e400001-b5a3-f393-e0a9-e50e24dcca9e"
-    uuid_write = "6e400002-b5a3-f393-e0a9-e50e24dcca9e"
-    uuid_notify = "6e400003-b5a3-f393-e0a9-e50e24dcca9e"
-    write = None
-    notify = None
-    _commands = {
-        "prefix": 61,
-        "suffix": 90,
-        "REQUEST_PARAMS": 1,
-        "SET_PARAMS": 2
-    }
-
+    
     def __init__(
             self,
             name,
