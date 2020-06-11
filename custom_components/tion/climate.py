@@ -136,12 +136,8 @@ class Tion(ClimateEntity, RestoreEntity):
             self._support_flags = SUPPORT_FLAGS | SUPPORT_PRESET_MODE
         self._away_temp = away_temp
         self._is_away = False
-        self._hvac_mapping = {
-            HVAC_MODE_HEAT: CURRENT_HVAC_HEAT, #heater is on. We may heat or not, so it is a hack
-            HVAC_MODE_FAN_ONLY: CURRENT_HVAC_FAN, #heater is off
-            HVAC_MODE_OFF: CURRENT_HVAC_OFF #device is off
-        }
-        self._hvac_list = list(self._hvac_mapping.keys())
+
+        self._hvac_list = [ HVAC_MODE_HEAT, HVAC_MODE_FAN_ONLY, HVAC_MODE_OFF ]
         self._fan_speed = 1
         self._is_heating: bool = False
         #tion part
