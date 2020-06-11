@@ -88,14 +88,9 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         ]
     )
 
-class TionException(Exception):
-    def __init__(self, expression, message):
-        self.expression = expression
-        self.message = message
-
 class Tion(ClimateEntity, RestoreEntity):
     """Representation of a Tion device."""
-    
+
     def __init__(
             self,
             name,
