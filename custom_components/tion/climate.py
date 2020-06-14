@@ -320,14 +320,18 @@ class Tion(ClimateEntity, RestoreEntity):
         await self._async_set_state(fan_speed=fan_mode, is_on=True)
 
 
-    async def _async_update_state(self, time=None, force: bool = False, keep_connection: bool = False) -> dict:
+    async def _async_update_state(self, time = None, force: bool = False, keep_connection: bool = False) -> dict:
         def decode_state(state:str) -> bool:
             return True if state == "on" else False
 
         _LOGGER.debug("Update fired force = " + str(force) + ". Keep connection is " + str(keep_connection))
-        now = time.time()
+        if time:
+            _LOGGER.debug("Now is %s", time)
+            now = int(time.timestamp())
+        else:
+            now = 0
 
-        if self._next_update < now:
+        if self._next_update < now or force:
             try:
                 response = self._tion.get(keep_connection)
 
@@ -343,6 +347,7 @@ class Tion(ClimateEntity, RestoreEntity):
                 _LOGGER.critical("Got exception %s", str(e))
                 _LOGGER.critical("Will delay next check")
                 self._next_update = now + self._delay
+                response = {}
         else:
             response = {}
 
