@@ -1,6 +1,7 @@
 """Adds support for generic thermostat units."""
 import asyncio
 import logging
+import time
 from bluepy import btle
 from typing import Tuple, Callable
 from tion import s3 as tion
@@ -126,6 +127,8 @@ class Tion(ClimateEntity, RestoreEntity):
         self._is_heating: bool = False
         #tion part
         self._tion = tion(mac)
+        self._delay = 600  #if we could not connect wait a little
+        self._next_update = 0
 
 
     async def async_added_to_hass(self):
@@ -322,16 +325,26 @@ class Tion(ClimateEntity, RestoreEntity):
             return True if state == "on" else False
 
         _LOGGER.debug("Update fired force = " + str(force) + ". Keep connection is " + str(keep_connection))
+        now = time.time()
 
-        response = self._tion.get(keep_connection)
+        if self._next_update < now:
+            try:
+                response = self._tion.get(keep_connection)
 
-        self._cur_temp = response["out_temp"]
-        self._target_temp = response["heater_temp"]
-        self._is_on = decode_state(response["status"])
-        self._heater = decode_state(response["heater"])
-        self._fan_speed = response["fan_speed"]
-        self._is_heating = decode_state(response["is_heating"])
-        self.async_write_ha_state()
+                self._cur_temp = response["out_temp"]
+                self._target_temp = response["heater_temp"]
+                self._is_on = decode_state(response["status"])
+                self._heater = decode_state(response["heater"])
+                self._fan_speed = response["fan_speed"]
+                self._is_heating = decode_state(response["is_heating"])
+                self.async_write_ha_state()
+                self._next_update = 0
+            except Exception as e:
+                _LOGGER.critical("Got exception %s", str(e))
+                _LOGGER.critical("Will delay next check")
+                self._next_update = now + self._delay
+        else:
+            response = {}
 
         return response
 
