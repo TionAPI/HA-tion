@@ -18,6 +18,13 @@ Before using this custom component you must pair you breezer and homeassistant h
 Ordinary bluetooth pairing is not enough. Please see 
   [python repository](https://github.com/TionAPI/python) for pairing procedure description
 ## Installation
+### HACS
+  1. goto HACS->Integrations->three dot at upper-right conner->Custom repositories;
+  1. add TionAPI/HA-tion to ADD CUSTOM REPOSITORY field and select Integration in CATEGORY; 
+  1. click "add" button;
+  1. find "Tion breezer" integration;
+  1. click "Install".
+
 ### shell
 ```shell script
 cd <homeassist_config_directory>
@@ -26,6 +33,7 @@ cd custom_components
 git clone https://github.com/TionAPI/HA-tion.git
 ln -s HA-tion.git/custom_components/tion tion 
 ```
+
 ## Configuration
 configuration.yaml:
 ```yaml
