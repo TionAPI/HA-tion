@@ -3,7 +3,8 @@ This custom integration will allow your Home assistant to control:
 * fan speed
 * target heater temp
 * heater mode (on/off)
-for your Tion S3 breezer.
+
+of your Tion S3 breezer via bluetooth. If you are prefer control breezer via Magic Air, please follow to https://github.com/airens/tion_home_assistant repository.
 
 :warning: Please remember that breezer is not heating device and don't try use it for room heating :warning: 
 #### disclaimer: everything that you do, you do at your own peril and risk
