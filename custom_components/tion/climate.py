@@ -20,6 +20,7 @@ from homeassistant.components.climate.const import (
     HVAC_MODE_FAN_ONLY,
     HVAC_MODE_OFF,
     PRESET_AWAY,
+    PRESET_BOOST,
     PRESET_NONE,
     SUPPORT_PRESET_MODE,
     SUPPORT_TARGET_TEMPERATURE,
@@ -117,10 +118,13 @@ class Tion(ClimateEntity, RestoreEntity):
         self._target_temp = target_temp
         self._unit = unit
         self._support_flags = SUPPORT_FLAGS
+        self._preset = PRESET_NONE
         if away_temp:
             self._support_flags = SUPPORT_FLAGS | SUPPORT_PRESET_MODE
         self._away_temp = away_temp
         self._is_away = False
+        self._is_boost: bool = False
+        self._saved_fan_mode = 0
 
         self._hvac_list = [ HVAC_MODE_HEAT, HVAC_MODE_FAN_ONLY, HVAC_MODE_OFF ]
         self._fan_speed = 1
@@ -163,7 +167,9 @@ class Tion(ClimateEntity, RestoreEntity):
                     )
                 else:
                     self._target_temp = float(old_state.attributes[ATTR_TEMPERATURE])
-            if old_state.attributes.get(ATTR_PRESET_MODE) == PRESET_AWAY:
+            if old_state.attributes.get(ATTR_PRESET_MODE):
+                self._preset = old_state.attributes.get(ATTR_PRESET_MODE)
+            if self.preset_mode == PRESET_AWAY:
                 self._is_away = True
             if not self._hvac_mode and old_state.state:
                 self._hvac_mode = old_state.state
@@ -244,12 +250,15 @@ class Tion(ClimateEntity, RestoreEntity):
     @property
     def preset_mode(self):
         """Return the current preset mode, e.g., home, away, temp."""
-        return PRESET_AWAY if self._is_away else PRESET_NONE
+        return self._preset
 
     @property
     def preset_modes(self):
         """Return a list of available preset modes or PRESET_NONE if _away_temp is undefined."""
-        return [PRESET_NONE, PRESET_AWAY] if self._away_temp else PRESET_NONE
+        modes = [PRESET_NONE, PRESET_BOOST]
+        if self._away_temp:
+            modes.append(PRESET_AWAY)
+        return modes
 
     async def async_set_hvac_mode(self, hvac_mode):
         """Set hvac mode."""
@@ -298,15 +307,30 @@ class Tion(ClimateEntity, RestoreEntity):
             self._saved_target_temp = self._target_temp
             self._target_temp = self._away_temp
             await self._async_set_state(heater_temp=self._target_temp)
-        elif preset_mode == PRESET_NONE and self._is_away:
-            self._is_away = False
-            self._target_temp = self._saved_target_temp
-            await self._async_set_state(heater_temp=self._target_temp)
 
+        if preset_mode == PRESET_BOOST and not self._is_boost:
+            self._is_boost = True
+            self._saved_fan_mode = int(self.fan_mode)
+            await self.async_set_fan_mode(self.boost_fan_mode)
+        elif preset_mode != PRESET_BOOST and self.preset_mode == PRESET_BOOST:
+            # returning from boost mode
+            _LOGGER.debug("Returning from boost mode. Going to set fan speed %d" % self._saved_fan_mode)
+            self._is_boost = False
+            await self.async_set_fan_mode(self._saved_fan_mode)
+
+        self._preset = preset_mode
         self.async_write_ha_state()
     @property
     def fan_mode(self):
         return self._fan_speed
+
+    @property
+    def boost_fan_mode(self) -> int:
+        """Fan speed for boost mode
+
+        :return: maximum of supported fan_modes
+        """
+        return max(self.fan_modes)
 
     @property
     def fan_modes(self):
@@ -323,8 +347,13 @@ class Tion(ClimateEntity, RestoreEntity):
         return 1
 
     async def async_set_fan_mode(self, fan_mode):
-        await self._async_set_state(fan_speed=fan_mode, is_on=True)
-
+        if (self.preset_mode == PRESET_BOOST and self._is_boost) and fan_mode != self.boost_fan_mode:
+            _LOGGER.debug("I'm in boost mode. Will ignore requested fan speed %s" % fan_mode)
+            fan_mode = self.boost_fan_mode
+        if fan_mode != self.fan_mode or not self._is_on:
+            self._fan_speed = fan_mode
+            await self._async_set_state(fan_speed=fan_mode, is_on=True)
+            self.async_write_ha_state()
 
     async def _async_update_state(self, time = None, force: bool = False, keep_connection: bool = False) -> dict:
         def decode_state(state:str) -> bool:
@@ -350,6 +379,13 @@ class Tion(ClimateEntity, RestoreEntity):
                 self._hvac_mode = self.hvac_mode
                 self.async_write_ha_state()
                 self._next_update = 0
+                if self.fan_mode != self.boost_fan_mode and (self._is_boost or self.preset_mode == PRESET_BOOST):
+                    _LOGGER.warning("I'm in boost mode, but current speed %d is not equal boost speed %d. Dropping boost mode" % (
+                        self.fan_mode,
+                        self.boost_fan_mode
+                    ))
+                    self._is_boost = False
+                    self._preset = PRESET_NONE
             except Exception as e:
                 _LOGGER.critical("Got exception %s", str(e))
                 _LOGGER.critical("Will delay next check")
