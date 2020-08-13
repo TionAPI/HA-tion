@@ -304,7 +304,7 @@ class Tion(ClimateEntity, RestoreEntity):
 
     @property
     def fan_modes(self):
-        return [1,2,3,4,5,6]
+        return [1, 2, 3, 4, 5, 6]
 
     @property
     def precision(self):
