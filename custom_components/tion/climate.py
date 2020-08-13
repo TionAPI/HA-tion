@@ -206,7 +206,13 @@ class Tion(ClimateEntity, RestoreEntity):
     @property
     def hvac_mode(self):
         """Return current operation."""
-        return self._hvac_mode
+        if self._is_on:
+            if self._heater:
+                return HVAC_MODE_HEAT
+            else:
+                return HVAC_MODE_FAN_ONLY
+        else:
+            return HVAC_MODE_OFF
 
     @property
     def hvac_modes(self):
@@ -341,6 +347,7 @@ class Tion(ClimateEntity, RestoreEntity):
                 self._heater = decode_state(response["heater"])
                 self._fan_speed = response["fan_speed"]
                 self._is_heating = decode_state(response["is_heating"])
+                self._hvac_mode = self.hvac_mode
                 self.async_write_ha_state()
                 self._next_update = 0
             except Exception as e:
