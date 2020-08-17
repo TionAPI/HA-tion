@@ -338,11 +338,13 @@ class Tion(ClimateEntity, RestoreEntity):
                     ))
                     self._is_boost = False
                     self._preset = PRESET_NONE
-            except Exception as e:
+            except btle.BTLEDisconnectError as e:
                 _LOGGER.critical("Got exception %s", str(e))
                 _LOGGER.critical("Will delay next check")
                 self._next_update = now + self._delay
                 response = {}
+            except Exception as e:
+                raise e
         else:
             response = {}
 
