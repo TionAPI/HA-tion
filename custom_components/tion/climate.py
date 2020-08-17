@@ -318,7 +318,7 @@ class Tion(ClimateEntity, RestoreEntity):
         else:
             now = 0
 
-        if self._next_update < now or force:
+        if self._next_update <= now or force:
             try:
                 response = self._tion.get(keep_connection)
 
