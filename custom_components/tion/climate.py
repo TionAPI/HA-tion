@@ -11,8 +11,6 @@ import voluptuous as vol
 from homeassistant.components.climate import PLATFORM_SCHEMA, ClimateEntity
 from homeassistant.components.climate.const import (
     ATTR_PRESET_MODE,
-    ATTR_FAN_MODES,
-    ATTR_FAN_MODE,
     CURRENT_HVAC_FAN,
     CURRENT_HVAC_HEAT,
     CURRENT_HVAC_OFF,
@@ -25,21 +23,14 @@ from homeassistant.components.climate.const import (
     SUPPORT_PRESET_MODE,
     SUPPORT_TARGET_TEMPERATURE,
     SUPPORT_FAN_MODE,
-    SUPPORT_PRESET_MODE,
  )
 from homeassistant.const import (
-    ATTR_ENTITY_ID,
     ATTR_TEMPERATURE,
     CONF_NAME,
     EVENT_HOMEASSISTANT_START,
     PRECISION_WHOLE,
-    SERVICE_TURN_OFF,
-    SERVICE_TURN_ON,
-    STATE_ON,
-    STATE_UNAVAILABLE,
-    STATE_UNKNOWN,
 )
-from homeassistant.core import DOMAIN as HA_DOMAIN, callback
+from homeassistant.core import callback
 from homeassistant.helpers import condition
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import (
