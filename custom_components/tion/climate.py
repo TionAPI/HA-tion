@@ -106,14 +106,6 @@ class Tion(ClimateEntity, RestoreEntity):
             )
         await self._async_update_state(force=True)
 
-
-
-        @callback
-        def _async_startup(event):
-            """Init on startup."""
-
-        self.hass.bus.async_listen_once(EVENT_HOMEASSISTANT_START, _async_startup)
-
         # Check If we have an old state
         old_state = await self.async_get_last_state()
         if old_state is not None:
