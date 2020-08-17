@@ -75,7 +75,6 @@ class Tion(ClimateEntity, RestoreEntity):
         self._is_on = False
         self._heater = False
         self._cur_temp = None
-        self._temp_lock = asyncio.Lock()
         self._target_temp = target_temp
         self._unit = unit
         self._support_flags = SUPPORT_FLAGS
