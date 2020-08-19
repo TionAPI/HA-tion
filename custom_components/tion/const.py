@@ -21,7 +21,7 @@ from homeassistant.const import (
     EVENT_HOMEASSISTANT_START,
     PRECISION_WHOLE,
 )
-
+DOMAIN = 'tion'
 DEFAULT_NAME = "Tion Breezer"
 
 CONF_TARGET_TEMP = "target_temp"
@@ -31,3 +31,11 @@ CONF_AWAY_TEMP = "away_temp"
 CONF_MAC = "mac"
 SUPPORTED_DEVICES = ['S3']
 SUPPORT_FLAGS = SUPPORT_TARGET_TEMPERATURE | SUPPORT_FAN_MODE
+
+TION_SCHEMA = {
+    'name': {'type': str, 'default': DEFAULT_NAME, 'required': True},
+    CONF_MAC: {'type': str, 'required': True},
+    CONF_KEEP_ALIVE: {'type': int, 'default': 60, 'required': False},
+    CONF_AWAY_TEMP: {'type': int, 'default': 15, 'required': False},
+    'pair': {'type': bool, 'default': True, 'required': False},
+}

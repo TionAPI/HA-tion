@@ -1,0 +1,39 @@
+{
+  "title": "Tion integration",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configuration for Tion breezer",
+        "data": {
+          "mac": "Device MAC address",
+          "name": "Name for device",
+          "away_temp": "Temperature (celsius) for AWAY mode",
+          "keep_alive": "Interval for querying breezer",
+          "pair": "Need device pairing?"
+        }
+      },
+      "pair": {
+        "title": "Device pairing",
+        "description": "Turn breezer to pair mode by holding button for more than 5 seconds for pairing with Home Assistant.\n\n![Location of button on bridge](/static/images/config_philips_hue.jpg)"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "title": "Configuration for Tion breezer",
+        "data": {
+          "mac": "Device MAC address",
+          "name": "Name for device",
+          "away_temp": "Temperature (celsius) for AWAY mode",
+          "keep_alive": "Interval for querying breezer",
+          "pair": "Need device pairing?"
+        }
+      },
+      "pair": {
+        "title": "Device pairing",
+        "description": "Turn breezer to pair mode by holding button for more than 5 seconds for pairing with Home Assistant.\n\n![Location of button on bridge](/static/images/config_philips_hue.jpg)"
+      }
+    }
+  }
+}

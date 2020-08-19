@@ -3,6 +3,9 @@ This custom integration will allow your Home assistant to control:
 * fan speed
 * target heater temp
 * heater mode (on/off)
+* some presets:
+    * boost
+    * away    
 
 of your Tion S3 breezer via bluetooth. If you are prefer control breezer via Magic Air, please follow to https://github.com/airens/tion_home_assistant repository.
 
@@ -13,36 +16,23 @@ of your Tion S3 breezer via bluetooth. If you are prefer control breezer via Mag
 ## Requirements
   1. BTLE supported host with Home Assistant
   1. Tion S3 breezer
-## Prepare
-Before using this custom component you must pair you breezer and homeassistant host.
-Ordinary bluetooth pairing is not enough. Please see 
-  [python repository](https://github.com/TionAPI/python) for pairing procedure description
+
 ## Installation
 ### HACS
   1. goto HACS->Integrations->three dot at upper-right conner->Custom repositories;
   1. add TionAPI/HA-tion to ADD CUSTOM REPOSITORY field and select Integration in CATEGORY; 
   1. click "add" button;
   1. find "Tion breezer" integration;
-  1. click "Install".
+  1. click "Install". Home assistant restart may be required;
+  1. go to Integrations page;
+  1. click "plus" button;
+  1. type "Tion" in search field;
+  1. click on "Tion breezer integration";
+  1. fill fields (values will be imported from configuration.yaml if you used climate.tion component before);
+  1. click "Next" and follow instructions;
+  1. remove climate.tion from configuration.yaml;
+  1. restart Home Assistant.
 
-### shell
-```shell script
-cd <homeassist_config_directory>
-mkdir -p custom_components
-cd custom_components
-git clone https://github.com/TionAPI/HA-tion.git
-ln -s HA-tion.git/custom_components/tion tion 
-```
-
-## Configuration
-configuration.yaml:
-```yaml
-climate:
-  - platform: tion
-    mac: <put:MAC:here>   #tion MAC address, like in pair
-    target_temp: 23       #default heater temp 
-    away_temp: 15         #heater temp in away mode
-```
 ### Automation example
 automations.yaml:
 ```yaml

@@ -2,15 +2,18 @@
 import asyncio
 import logging
 import time
+import datetime
 from bluepy import btle
 from typing import Tuple, Callable
 from tion import s3 as tion
+from homeassistant.helpers.entity import Entity
+from homeassistant.config_entries import ConfigEntry
 
 import voluptuous as vol
 
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.core import callback
-from homeassistant.helpers import condition
+from homeassistant.helpers import condition, device_registry as dr
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import (
     async_track_state_change,
@@ -34,24 +37,66 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     }
 )
 
+devices = []
+
+
+async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
+    """Setup entry"""
+    config = {}
+    if hasattr(config_entry, 'options'):
+        if any(config_entry.options):
+            config = config_entry.options
+    elif hasattr(config_entry, 'data'):
+        if any(config_entry.data):
+            config = config_entry.data
+
+    mac = config[CONF_MAC]
+    if mac not in devices:
+        devices.append(mac)
+        async_add_devices([
+            TionClimate(
+                config['name'],
+                config[CONF_MAC],
+                22,
+                datetime.timedelta(seconds=config[CONF_KEEP_ALIVE]),
+                HVAC_MODE_OFF,
+                config[CONF_AWAY_TEMP],
+                hass.config.units.temperature_unit,
+                config_entry.entry_id,
+            )]
+        )
+    else:
+        _LOGGER.warning("Device with mac %s was already configured via configuration.yaml" % mac)
+        _LOGGER.warning(
+            "Please use UI configuration. Support for configuration via configuration.yaml will be dropped in v2.0.0")
+    return True
+
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the generic thermostat platform."""
-    async_add_entities(
-        [
-            Tion(
-                config.get(CONF_NAME),
-                config.get(CONF_MAC),
-                config.get(CONF_TARGET_TEMP),
-                config.get(CONF_KEEP_ALIVE),
-                config.get(CONF_INITIAL_HVAC_MODE),
-                config.get(CONF_AWAY_TEMP),
-                hass.config.units.temperature_unit,
-            )
-        ]
-    )
+    mac = config.get(CONF_MAC)
+    if mac not in devices:
+        devices.append(mac)
+        async_add_entities(
+            [
+                TionClimate(
+                    config.get(CONF_NAME),
+                    config.get(CONF_MAC),
+                    config.get(CONF_TARGET_TEMP),
+                    config.get(CONF_KEEP_ALIVE),
+                    config.get(CONF_INITIAL_HVAC_MODE),
+                    config.get(CONF_AWAY_TEMP),
+                    hass.config.units.temperature_unit,
+                )
+            ]
+        )
+    else:
+        _LOGGER.warning("Device with mac %s was already configured via user interface" % mac)
+        _LOGGER.warning(
+            "Please use UI configuration. Support for configuration via configuration.yaml will be dropped in v2.0.0")
 
-class Tion(ClimateEntity, RestoreEntity):
+
+class TionClimate(ClimateEntity, RestoreEntity):
     """Representation of a Tion device."""
 
     def __init__(
@@ -63,6 +108,7 @@ class Tion(ClimateEntity, RestoreEntity):
             initial_hvac_mode,
             away_temp,
             unit,
+            entry_id=None
     ):
         """Initialize the thermostat."""
         #General part
@@ -89,11 +135,13 @@ class Tion(ClimateEntity, RestoreEntity):
         self._hvac_list = [ HVAC_MODE_HEAT, HVAC_MODE_FAN_ONLY, HVAC_MODE_OFF ]
         self._fan_speed = 1
         self._is_heating: bool = False
+        self._entry_id = entry_id
         #tion part
+        self._mac = mac
         self._tion = tion(mac)
         self._delay = 600  #if we could not connect wait a little
         self._next_update = 0
-
+        self._fw_version = None
 
     async def async_added_to_hass(self):
         """Run when entity about to be added."""
@@ -139,8 +187,6 @@ class Tion(ClimateEntity, RestoreEntity):
         if not self._hvac_mode:
             self._hvac_mode = HVAC_MODE_OFF
 
-
-
     @property
     def should_poll(self):
         """Return the polling state."""
@@ -182,7 +228,6 @@ class Tion(ClimateEntity, RestoreEntity):
         """Return the current running hvac operation if supported.
         Need to be one of CURRENT_HVAC_*.
         """
-
         if self._is_on:
             if self._is_heating:
                 current_hvac_operation = CURRENT_HVAC_HEAT
@@ -197,8 +242,6 @@ class Tion(ClimateEntity, RestoreEntity):
         """Return the temperature we try to reach."""
         return self._target_temp
 
-
-
     @property
     def preset_mode(self):
         """Return the current preset mode, e.g., home, away, temp."""
@@ -211,6 +254,10 @@ class Tion(ClimateEntity, RestoreEntity):
         if self._away_temp:
             modes.append(PRESET_AWAY)
         return modes
+
+    @property
+    def mac(self):
+        return self._mac
 
     async def async_set_hvac_mode(self, hvac_mode):
         """Set hvac mode."""
@@ -272,6 +319,7 @@ class Tion(ClimateEntity, RestoreEntity):
 
         self._preset = preset_mode
         self.async_write_ha_state()
+
     @property
     def fan_mode(self):
         return self._fan_speed
@@ -328,8 +376,19 @@ class Tion(ClimateEntity, RestoreEntity):
                 self._heater = decode_state(response["heater"])
                 self._fan_speed = response["fan_speed"]
                 self._is_heating = decode_state(response["is_heating"])
+                self._fw_version = response["fw_version"]
                 self._hvac_mode = self.hvac_mode
                 self.async_write_ha_state()
+
+                if self._entry_id:
+                    device_registry = await dr.async_get_registry(self.hass)
+                    info = self.device_info
+                    del(info['type'])
+                    device_registry.async_get_or_create(
+                        config_entry_id=self._entry_id,
+                        **info
+                    )
+
                 self._next_update = 0
                 if self.fan_mode != self.boost_fan_mode and (self._is_boost or self.preset_mode == PRESET_BOOST):
                     _LOGGER.warning("I'm in boost mode, but current speed %d is not equal boost speed %d. Dropping boost mode" % (
@@ -344,6 +403,7 @@ class Tion(ClimateEntity, RestoreEntity):
                 self._next_update = now + self._delay
                 response = {}
             except Exception as e:
+                _LOGGER.critical('Response is %s' % response)
                 raise e
         else:
             response = {}
@@ -363,3 +423,23 @@ class Tion(ClimateEntity, RestoreEntity):
         _LOGGER.info("Need to set: " + args)
         self._tion.set(kwargs)
         await self._async_update_state(force=True, keep_connection=False)
+
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self.mac)},
+            "name": self.name,
+            "manufacturer": "Tion",
+            "model": "S3",
+            "sw_version": self._fw_version,
+            "type": None,
+        }
+
+    @property
+    def unique_id(self):
+        return self.mac
+
+    @property
+    def name(self):
+        """Return the name of the sensor."""
+        return self._name
