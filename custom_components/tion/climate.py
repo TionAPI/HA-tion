@@ -47,9 +47,9 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
         if any(config_entry.options):
             config = config_entry.options
     if not any(config):
-        if hasattr(self._config_entry, 'data'):
-            if any(self._config_entry.data):
-                config = self._config_entry.data
+        if hasattr(config_entry, 'data'):
+            if any(config_entry.data):
+                config = config_entry.data
 
     mac = config[CONF_MAC]
     if mac not in devices:
