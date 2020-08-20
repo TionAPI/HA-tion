@@ -50,7 +50,10 @@ class TionFlow:
         try:
             value = config[key].seconds if isinstance(config[key], datetime.timedelta) else config[key]
             result['description'] = {"suggested_value": value}
-        except KeyError:
+        except (TypeError, KeyError) as e:
+            # TypeError -- config is not dict (have no climate in config, for example)
+            # KeyError -- config have no key (have climate, but have no Tion)
+            _LOGGER.debug(e)
             pass
 
         return result
