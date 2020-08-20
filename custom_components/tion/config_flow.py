@@ -100,9 +100,10 @@ class TionFlow:
         if hasattr(self._config_entry, 'options'):
             if any(self._config_entry.options):
                 config = self._config_entry.options
-        elif hasattr(self._config_entry, 'data'):
-            if any(self._config_entry.data):
-                config = self._config_entry.data
+        if not any(config):
+            if hasattr(self._config_entry, 'data'):
+                if any(self._config_entry.data):
+                    config = self._config_entry.data
 
         return config
 
