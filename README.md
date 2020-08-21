@@ -17,13 +17,15 @@ of your Tion S3 breezer via bluetooth. If you are prefer control breezer via Mag
   1. BTLE supported host with Home Assistant
   1. Tion S3 breezer
 
-## Installation
-### HACS
+## Installation & configuration
+### HACS installation
   1. goto HACS->Integrations->three dot at upper-right conner->Custom repositories;
   1. add TionAPI/HA-tion to ADD CUSTOM REPOSITORY field and select Integration in CATEGORY; 
   1. click "add" button;
   1. find "Tion breezer" integration;
   1. click "Install". Home assistant restart may be required;
+  
+### Configuration via User interface
   1. go to Integrations page;
   1. click "plus" button;
   1. type "Tion" in search field;
@@ -32,6 +34,8 @@ of your Tion S3 breezer via bluetooth. If you are prefer control breezer via Mag
   1. click "Next" and follow instructions;
   1. remove climate.tion from configuration.yaml;
   1. restart Home Assistant.
+  
+  Repeat this steps for every device that you are going to use with home assistant.
 
 ### Automation example
 automations.yaml:
