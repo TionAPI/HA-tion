@@ -83,8 +83,11 @@ class TionFlow:
                 _LOGGER.debug("Going create entry with name %s" % input['name'])
                 _LOGGER.debug(input)
                 return self.async_create_entry(title=input['name'], data=input)
-
-        self._build_schema(self.hass.data['climate'].config['climate'])
+        try:
+            config = self.hass.data['climate'].config['climate']
+        except KeyError:
+            config = {}
+        self._build_schema(config)
         return self.async_show_form(step_id="user", data_schema=self._schema)
 
     async def async_step_pair(self, input):
