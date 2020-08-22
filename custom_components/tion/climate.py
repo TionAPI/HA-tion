@@ -5,7 +5,7 @@ import time
 import datetime
 from bluepy import btle
 from typing import Tuple, Callable
-from tion import s3 as tion
+from tion_btle import s3 as tion
 from homeassistant.helpers.entity import Entity
 from homeassistant.config_entries import ConfigEntry
 
