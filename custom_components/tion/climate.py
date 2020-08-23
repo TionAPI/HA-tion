@@ -367,7 +367,7 @@ class TionClimateEntity(TionClimateDevice):
         self._entry_id = entry_id
         self.hass: HomeAssistant = hass
         self._tion_entry = self.hass.data[DOMAIN][self._entry_id]
-        self._keep_alive: datetime.timedelta = datetime.timedelta(seconds=self._tion_entry.keep_alive/2)
+        self._keep_alive: datetime.timedelta = datetime.timedelta(seconds=self._tion_entry.keep_alive)
         self._name = self._tion_entry.name
         self._away_temp = self._tion_entry.away_temp
         self._support_flags = SUPPORT_FLAGS | SUPPORT_PRESET_MODE

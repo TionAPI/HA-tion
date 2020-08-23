@@ -46,6 +46,8 @@ class TionInstance:
         self.__is_heater_on: bool = None
         self.__is_heating: bool = None
         self.__fw_version: str = None
+        self.__in_temp: int = None
+        self.__filter_remain: int = None
 
         self._next_update: int = 0
 
@@ -93,6 +95,8 @@ class TionInstance:
                 self.__fan_speed = response["fan_speed"]
                 self.__is_heating = decode_state(response["is_heating"])
                 self.__fw_version = response["fw_version"]
+                self.__in_temp = response["in_temp"]
+                self.__filter_remain = response["filter_remain"]
                 self._next_update = 0
             except btle.BTLEDisconnectError as e:
                 _LOGGER.critical("Got exception %s", str(e))
@@ -159,6 +163,14 @@ class TionInstance:
     @property
     def fw_version(self) -> str:
         return self.__fw_version
+
+    @property
+    def in_temp(self) -> int:
+        return self.__in_temp
+
+    @property
+    def filter_remain(self) -> int:
+        return self.__filter_remain
 
     async def set(self, **kwargs):
         if "is_on" in kwargs:
