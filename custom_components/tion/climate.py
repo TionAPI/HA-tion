@@ -87,7 +87,6 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
 class TionClimateDevice(ClimateEntity, RestoreEntity):
     """Representation of a Tion device."""
-
     def __init__(
             self,
             name=None,
