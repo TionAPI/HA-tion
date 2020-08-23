@@ -92,8 +92,11 @@ class TionFlow:
 
     async def async_step_pair(self, input):
         """Pair host and breezer"""
-        from tion_btle import s3 as tion
-        _tion = tion(mac)
+        return self.async_show_form(step_id="pair_done_pressed")
+
+    async def async_step_pair_done_pressed(self, input):
+        from tion_btle.s3 import s3 as tion
+        _tion = tion(self._data['mac'])
         _tion.pair()
         return self.async_create_entry(title=self._data['name'], data=self._data)
 
