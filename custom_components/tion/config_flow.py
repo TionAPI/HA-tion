@@ -23,6 +23,7 @@ class TionFlow:
         self._schema = vol.Schema({})
         self._data: dict = {}
         self._config_entry: ConfigEntry = {}
+        self._retry: bool = False
 
     @staticmethod
     def __get_my_platform(config: dict):
@@ -50,10 +51,9 @@ class TionFlow:
         try:
             value = config[key].seconds if isinstance(config[key], datetime.timedelta) else config[key]
             result['description'] = {"suggested_value": value}
-        except (TypeError, KeyError) as e:
+        except (TypeError, KeyError):
             # TypeError -- config is not dict (have no climate in config, for example)
             # KeyError -- config have no key (have climate, but have no Tion)
-            _LOGGER.debug(e)
             pass
 
         return result
@@ -70,18 +70,30 @@ class TionFlow:
             options.update(self.__add_default_value(self.config, k))
             options.update(self.__add_value_from_yaml_config(config, k))
             options.update(self.__add_value_from_saved_settings(self.config, k))
+            if self._retry:
+                options.update(self.__add_value_from_saved_settings(self._data, k))
             self._schema = self._schema.extend({type(k, **options): TION_SCHEMA[k]['type']})
 
-    async def async_step_user(self, input):
+    async def async_step_user(self, input=None):
         """user initiates a flow via the user interface."""
 
         if input is not None:
             self._data = input
             if input['pair']:
+                _LOGGER.debug("Showing pair info")
                 return self.async_show_form(step_id="pair")
             else:
                 _LOGGER.debug("Going create entry with name %s" % input['name'])
                 _LOGGER.debug(input)
+                from tion_btle.s3 import s3 as tion
+                try:
+                    _tion: tion = tion(input['mac'])
+                    result = _tion.get()
+                    fw: str = result['fw_version']
+                except Exception as e:
+                    _LOGGER.error("Could not get data from breezer. result is %s, error: %s" % (result, str(e)))
+                    return self.async_show_form(step_id='add_failed')
+
                 return self.async_create_entry(title=input['name'], data=input)
         try:
             config = self.hass.data['climate'].config['climate']
@@ -92,13 +104,29 @@ class TionFlow:
 
     async def async_step_pair(self, input):
         """Pair host and breezer"""
-        return self.async_show_form(step_id="pair_done_pressed")
-
-    async def async_step_pair_done_pressed(self, input):
         from tion_btle.s3 import s3 as tion
-        _tion = tion(self._data['mac'])
-        _tion.pair()
+        _LOGGER.debug("Real pairing step")
+        _tion: tion = tion(self._data['mac'])
+        result = {}
+        try:
+            _tion.pair()
+            result = _tion.get()
+            fw: str = result['fw_version']
+        except Exception as e:
+            _LOGGER.error("Cannot pair and get data. Result is %s, error: %s" % (result, str(e)))
+            return self.async_show_form(step_id='pair_failed')
+
         return self.async_create_entry(title=self._data['name'], data=self._data)
+
+    async def async_step_add_failed(self, input):
+        _LOGGER.debug("Add failed. Returning to first step")
+        self._retry = True
+        return await self.async_step_user(None)
+
+    async def async_step_pair_failed(self, input):
+        _LOGGER.debug("Pair failed. Returning to first step")
+        self._retry = True
+        return await self.async_step_user(None)
 
     @property
     def config(self) -> dict:

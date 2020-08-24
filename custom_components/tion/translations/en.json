@@ -15,6 +15,14 @@
       "pair": {
         "title": "Device pairing",
         "description": "Turn breezer to pair mode by holding button for more than 5 seconds for pairing with Home Assistant.\n\n![Location of button on bridge](/static/images/config_philips_hue.jpg)"
+      },
+      "pair_failed": {
+        "title": "Could not pair!",
+        "description": "Error occurs while pairing routine! Check logs for details."
+      },
+      "add_failed": {
+        "title": "Could not get test data from breezer!",
+        "description": "Error occurs while getting data. May be you need pairing. Check logs for details."
       }
     }
   },
@@ -33,7 +41,16 @@
       "pair": {
         "title": "Device pairing",
         "description": "Turn breezer to pair mode by holding button for more than 5 seconds for pairing with Home Assistant.\n\n![Location of button on bridge](/static/images/config_philips_hue.jpg)"
+      },
+      "pair_failed": {
+        "title": "Could not pair!",
+        "description": "Error occurs while pairing routine! Check logs for details."
+      },
+      "add_failed": {
+        "title": "Could not get test data from breezer!",
+        "description": "Error occurs while getting data. May be you need pairing. Check logs for details."
       }
     }
   }
+
 }
