@@ -89,5 +89,7 @@ For turning on debug  log level you may use following logger settings in configu
 logger:
   default: warning
   logs:
-    custom_components.tion.climate: debug
+    custom_components.tion: debug
+    tion_btle.tion: debug
+    tion_btle.s3: debug
 ```
