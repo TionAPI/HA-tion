@@ -394,8 +394,7 @@ class TionClimateEntity(TionClimateDevice):
         """Return the sensor temperature."""
         return self._tion_entry.out_temp
 
-    async def _async_set_state(self, heater: bool = False, **kwargs):
-        kwargs['heater'] = heater
+    async def _async_set_state(self, **kwargs):
         await self._tion_entry.set(**kwargs)
         await self._async_update_state(force=True, keep_connection=False)
 
