@@ -2,18 +2,18 @@
 Sensors for Tion breezers
 """
 import logging
-import datetime
-from typing import List
+from datetime import timedelta
 
 from homeassistant.const import TEMP_CELSIUS
 from homeassistant.helpers.entity import Entity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.event import async_track_time_interval
 
 from .const import DOMAIN, TION_SENSORS
 
 _LOGGER = logging.getLogger(__name__)
+
+SCAN_INTERVAL = timedelta(seconds=30)
 
 
 async def async_setup_platform(hass: HomeAssistant, config, async_add_entities, discovery_info=None):
@@ -69,27 +69,12 @@ class TionSensor(Entity):
     @property
     def should_poll(self):
         """Return the polling state."""
-        return False
+        return True
 
     @property
     def device_state_attributes(self):
         """Return the state attributes."""
         return {}
-
-    async def _async_update(self, time=None):
-        """Fetch new state data for the sensor.
-        This is the only method that should fetch new data for Home Assistant.
-        """      
-        self.async_write_ha_state()
-
-    async def async_added_to_hass(self):
-        """Run when entity about to be added."""
-        await super().async_added_to_hass()
-
-        async_track_time_interval(
-            self.hass, self._async_update, datetime.timedelta(seconds=self.hass.data[DOMAIN][self._entry_id].keep_alive/2)
-        )
-        await self._async_update()
 
     @property
     def unique_id(self):
