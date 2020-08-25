@@ -36,7 +36,6 @@ class TionSensor(Entity):
 
     def __init__(self, hass: HomeAssistant, sensor_type: str, entry_id):
         """Initialize the sensor."""
-        _LOGGER.warning("Init of sensor %s for %s " % (sensor_type, entry_id))
         if sensor_type not in TION_SENSORS.keys():
             raise NotImplementedError('Sensor "%s" is not supported' % sensor_type)
         self.hass: HomeAssistant = hass
@@ -44,6 +43,10 @@ class TionSensor(Entity):
         self._entry_id = entry_id
         self._state = None
         self.hass = hass
+
+        _LOGGER.info("Init of sensor %s for %s (%s) " % (
+            sensor_type, entry_id, self.hass.data[DOMAIN][self._entry_id].name
+        ))
 
     @property
     def name(self):
