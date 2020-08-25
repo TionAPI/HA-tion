@@ -104,7 +104,7 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
         self._last_mode = self._hvac_mode
         self._saved_target_temp = target_temp or away_temp
         self._is_on = False
-        self._heater = False
+        self._heater: bool = False
         self._cur_temp = None
         self._target_temp = target_temp
         self._unit = unit
@@ -390,18 +390,8 @@ class TionClimateEntity(TionClimateDevice):
         """Return the sensor temperature."""
         return self._tion_entry.out_temp
 
-    async def _async_set_state(self, **kwargs):
-        if "is_on" in kwargs:
-            kwargs["status"] = "on" if kwargs["is_on"] else "off"
-            del kwargs["is_on"]
-        if "heater" in kwargs:
-            kwargs["heater"] = "on" if kwargs["heater"] else "off"
-        if "fan_speed" in kwargs:
-            kwargs["fan_speed"] = int(kwargs["fan_speed"])
-
-        args = ', '.join('%s=%r' % x for x in kwargs.items())
-        _LOGGER.info("Need to set: " + args)
-        self.async_write_ha_state()
+    async def _async_set_state(self, heater: bool = False, **kwargs):
+        kwargs['heater'] = heater
         await self._tion_entry.set(**kwargs)
         await self._async_update_state(force=True, keep_connection=False)
 

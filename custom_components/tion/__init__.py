@@ -172,14 +172,14 @@ class TionInstance:
     def filter_remain(self) -> int:
         return self.__filter_remain
 
-    async def set(self, **kwargs):
+    async def set(self, heater: bool = False, **kwargs):
         if "is_on" in kwargs:
             kwargs["status"] = "on" if kwargs["is_on"] else "off"
             del kwargs["is_on"]
-        if "heater" in kwargs:
-            kwargs["heater"] = "on" if kwargs["heater"] else "off"
         if "fan_speed" in kwargs:
             kwargs["fan_speed"] = int(kwargs["fan_speed"])
+
+        kwargs["heater"] = "on" if heater else "off"
 
         args = ', '.join('%s=%r' % x for x in kwargs.items())
         _LOGGER.info("Need to set: " + args)
