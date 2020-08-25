@@ -359,6 +359,10 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
     async def _async_set_state(self, **kwargs):
         raise NotImplementedError
 
+    @property
+    def icon(self):
+        return 'mdi:air-purifier'
+
 
 class TionClimateEntity(TionClimateDevice):
     def __init__(self, config: ConfigEntry, entry_id, hass: HomeAssistant):
