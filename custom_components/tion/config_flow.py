@@ -110,6 +110,8 @@ class TionFlow:
         result = {}
         try:
             _tion.pair()
+            # We should sleep a bit, because immediately connection will cause device disconnected exception while
+            # enabling notifications
             result = _tion.get()
             fw: str = result['fw_version']
         except Exception as e:
