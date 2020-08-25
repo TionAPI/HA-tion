@@ -49,6 +49,8 @@ class TionInstance:
         self.__in_temp: int = None
         self.__filter_remain: int = None
 
+        # delay before next update if we got btle.BTLEDisconnectError
+        self._delay: int = 600
         self._next_update: int = 0
 
         self.__tion = tion(self.config[CONF_MAC])
