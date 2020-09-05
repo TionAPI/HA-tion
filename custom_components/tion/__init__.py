@@ -1,6 +1,8 @@
 """The Tion breezer component."""
 import logging
 import datetime
+from typing import Dict, Coroutine
+
 from bluepy import btle
 from tion_btle.s3 import s3 as tion
 from .const import DOMAIN, TION_SCHEMA, CONF_KEEP_ALIVE, CONF_AWAY_TEMP, CONF_MAC
@@ -16,12 +18,17 @@ async def async_setup(hass, config):
 
 
 async def async_setup_entry(hass, config_entry: ConfigEntry):
-    _LOGGER.info("Setting up %s ", config_entry.unique_id)
+    _LOGGER.info("Setting up %s ", config_entry.entry_id)
 
     if DOMAIN not in hass.data:
         hass.data[DOMAIN] = {}
 
-    hass.data[DOMAIN][config_entry.entry_id] = TionInstance(hass, config_entry)
+    master = get_master(hass)
+    hass.data[DOMAIN]['master'] = master
+
+    instance = TionInstance(hass, config_entry)
+    hass.data[DOMAIN][config_entry.entry_id] = instance
+    master.add_instance(instance)
     return True
 
 
@@ -73,40 +80,34 @@ class TionInstance:
         await self.hass.config_entries.async_forward_entry_setup(self._config_entry, 'climate')
         await self.hass.config_entries.async_forward_entry_setup(self._config_entry, 'sensor')
 
-    async def async_update_state(self, time=None, force: bool = False, keep_connection: bool = False):
-        _LOGGER.warning("Tion instance updated at %s" % time)
+    def update(self):
+        """get data from Tion"""
+        _LOGGER.info("Starting update for tion instance %s" % self._entry_id)
 
         def decode_state(state: str) -> bool:
             return True if state == "on" else False
 
-        _LOGGER.debug("Update fired force = " + str(force) + ". Keep connection is " + str(keep_connection))
-        if time:
-            _LOGGER.debug("Now is %s", time)
-            now = int(time.timestamp())
-        else:
-            now = 0
         response = {}
-        if self._next_update <= now or force:
-            try:
-                response = self.__tion.get(keep_connection)
 
-                self.__out_temp = response["out_temp"]
-                self.__heater_temp = response["heater_temp"]
-                self.__is_on = decode_state(response["status"])
-                self.__is_heater_on = decode_state(response["heater"])
-                self.__fan_speed = response["fan_speed"]
-                self.__is_heating = decode_state(response["is_heating"])
-                self.__fw_version = response["fw_version"]
-                self.__in_temp = response["in_temp"]
-                self.__filter_remain = response["filter_remain"]
-                self._next_update = 0
-            except btle.BTLEDisconnectError as e:
-                _LOGGER.critical("Got exception %s", str(e))
-                _LOGGER.critical("Will delay next check")
-                self._next_update = now + self._delay
-            except Exception as e:
-                _LOGGER.critical('Response is %s' % response)
-                raise e
+        try:
+            response = self.__tion.get()
+
+            self.__out_temp = response["out_temp"]
+            self.__heater_temp = response["heater_temp"]
+            self.__is_on = decode_state(response["status"])
+            self.__is_heater_on = decode_state(response["heater"])
+            self.__fan_speed = response["fan_speed"]
+            self.__is_heating = decode_state(response["is_heating"])
+            self.__fw_version = response["fw_version"]
+            self.__in_temp = response["in_temp"]
+            self.__filter_remain = response["filter_remain"]
+            self._next_update = 0
+        except btle.BTLEDisconnectError as e:
+            _LOGGER.critical("Got exception %s", str(e))
+            raise e
+        except Exception as e:
+            _LOGGER.critical('Response is %s' % response)
+            raise e
         return True
 
     @property
@@ -186,3 +187,52 @@ class TionInstance:
         args = ', '.join('%s=%r' % x for x in kwargs.items())
         _LOGGER.info("Need to set: " + args)
         self.__tion.set(kwargs)
+
+    @property
+    def entry_id(self):
+        return self._entry_id
+
+
+class TionMaster:
+    def __init__(self, hass: HomeAssistant):
+        self.hass: HomeAssistant = hass
+        self._instances: Dict[str, TionInstance] = {}
+        self._entities: Dict[str, Coroutine] = {}
+        async_track_time_interval(self.hass, self.async_update_state, datetime.timedelta(seconds=60))
+
+    async def async_update_state(self, time=None):
+        """
+        Home Assistant will call this function from time to time
+
+        :param time: timestamp of call
+        :return: None
+        """
+        for instance in self._instances.keys():
+            self.update(instance)
+            await self.update_state(instance)
+
+    def update(self, entity_id: str):
+        """Get data from Tion devices"""
+        _LOGGER.debug("Updating %s" % entity_id)
+        self._instances[entity_id].update()
+
+    async def update_state(self, entity_id: str):
+        """Call write_state for entities to update data in Home Assistant"""
+        await self._entities[entity_id]
+
+    def add_instance(self, instance: TionInstance):
+        """Add instance to list"""
+        self._instances[instance.entry_id] = instance
+
+    def add_entity(self, entity_id: str, callback: Coroutine):
+        """Add entity (sensor, climate, etc) to list for subscribing to updates"""
+        self._entities[entity_id] = callback
+
+
+def get_master(hass: HomeAssistant) -> TionMaster:
+    try:
+        master = hass.data[DOMAIN]['master']
+    except KeyError:
+        # no master defined
+        master = TionMaster(hass)
+    return master

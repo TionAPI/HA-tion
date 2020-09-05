@@ -19,6 +19,8 @@ from homeassistant.helpers import condition, device_registry as dr
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import (async_track_state_change, async_track_time_interval, )
 from homeassistant.helpers.restore_state import RestoreEntity
+
+from . import TionMaster
 from .const import *
 
 _LOGGER = logging.getLogger(__name__)
@@ -328,11 +330,6 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
         """Run when entity about to be added."""
         await super().async_added_to_hass()
 
-        if self._keep_alive:
-            async_track_time_interval(self.hass, self._async_update_state, self._keep_alive)
-        await self._async_update_state(force=True)
-        await self.restore_states()
-
     async def async_set_fan_mode(self, fan_mode):
         if (self.preset_mode == PRESET_BOOST and self._is_boost) and fan_mode != self.boost_fan_mode:
             _LOGGER.debug("I'm in boost mode. Will ignore requested fan speed %s" % fan_mode)
@@ -351,7 +348,6 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
         await self._async_set_state(heater_temp=temperature)
         self.async_write_ha_state()
 
-    @abstractmethod
     async def _async_update_state(self, time=None, force: bool = False, keep_connection: bool = False) -> dict:
         raise NotImplementedError
 
@@ -376,6 +372,13 @@ class TionClimateEntity(TionClimateDevice):
         self._away_temp = self._tion_entry.away_temp
         self._support_flags = SUPPORT_FLAGS | SUPPORT_PRESET_MODE
 
+        self._master: TionMaster = self.hass.data[DOMAIN]['master']
+
+        # subscribe for self updates
+        self._master.add_entity(self.unique_id, self.update_state())
+        # subscribe for device updates
+        self._master.add_entity(self._entry_id, self.update_state())
+
     @property
     def mac(self):
         return self._tion_entry.mac
@@ -396,11 +399,17 @@ class TionClimateEntity(TionClimateDevice):
 
     async def _async_set_state(self, **kwargs):
         await self._tion_entry.set(**kwargs)
-        await self._async_update_state(force=True, keep_connection=False)
+        self._master.update(self._entry_id)
+        self.update_state()
 
-    async def _async_update_state(self, time=None, force: bool = False, keep_connection: bool = False) -> dict:
-        """called every self._keep_alive"""
-        await self._tion_entry.async_update_state(time, force, keep_connection)
+    async def async_added_to_hass(self):
+        """Run when entity about to be added."""
+        await super().async_added_to_hass()
+
+        self._master.update(self._entry_id)
+        await self.restore_states()
+
+    async def update_state(self):
         self._is_on = self._tion_entry.is_on
         self._heater = self._tion_entry.is_heater_on
         self._is_heating = self._tion_entry.is_heating
@@ -483,3 +492,12 @@ class TionClimateYaml(TionClimateDevice):
             response = {}
 
         return response
+
+    async def async_added_to_hass(self):
+        """Run when entity about to be added."""
+        await super().async_added_to_hass()
+
+        if self._keep_alive:
+            async_track_time_interval(self.hass, self._async_update_state, self._keep_alive)
+        await self._async_update_state(force=True)
+        await self.restore_states()
