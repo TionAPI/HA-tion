@@ -375,9 +375,9 @@ class TionClimateEntity(TionClimateDevice):
         self._master: TionMaster = self.hass.data[DOMAIN]['master']
 
         # subscribe for self updates
-        self._master.add_entity(self.unique_id, self.update_state())
+        self._master.add_entity(self.unique_id, self)
         # subscribe for device updates
-        self._master.add_entity(self._entry_id, self.update_state())
+        self._master.add_entity(self._entry_id, self)
 
     @property
     def mac(self):
@@ -400,7 +400,7 @@ class TionClimateEntity(TionClimateDevice):
     async def _async_set_state(self, **kwargs):
         await self._tion_entry.set(**kwargs)
         self._master.update(self._entry_id)
-        self.update_state()
+        await self.update_state()
 
     async def async_added_to_hass(self):
         """Run when entity about to be added."""
@@ -410,6 +410,7 @@ class TionClimateEntity(TionClimateDevice):
         await self.restore_states()
 
     async def update_state(self):
+        _LOGGER.debug("Called update_state for %s(%s)" % (self.name, self._entry_id))
         self._is_on = self._tion_entry.is_on
         self._heater = self._tion_entry.is_heater_on
         self._is_heating = self._tion_entry.is_heating

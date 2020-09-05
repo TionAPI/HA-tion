@@ -197,7 +197,7 @@ class TionMaster:
     def __init__(self, hass: HomeAssistant):
         self.hass: HomeAssistant = hass
         self._instances: Dict[str, TionInstance] = {}
-        self._entities: Dict[str, Coroutine] = {}
+        self._entities: Dict[str, any] = {}
         async_track_time_interval(self.hass, self.async_update_state, datetime.timedelta(seconds=60))
 
     async def async_update_state(self, time=None):
@@ -207,6 +207,7 @@ class TionMaster:
         :param time: timestamp of call
         :return: None
         """
+        _LOGGER.debug("Regular update called")
         for instance in self._instances.keys():
             self.update(instance)
             await self.update_state(instance)
@@ -218,15 +219,15 @@ class TionMaster:
 
     async def update_state(self, entity_id: str):
         """Call write_state for entities to update data in Home Assistant"""
-        await self._entities[entity_id]
+        await self._entities[entity_id].update_state()
 
     def add_instance(self, instance: TionInstance):
         """Add instance to list"""
         self._instances[instance.entry_id] = instance
 
-    def add_entity(self, entity_id: str, callback: Coroutine):
+    def add_entity(self, entity_id: str, entity):
         """Add entity (sensor, climate, etc) to list for subscribing to updates"""
-        self._entities[entity_id] = callback
+        self._entities[entity_id] = entity
 
 
 def get_master(hass: HomeAssistant) -> TionMaster:
