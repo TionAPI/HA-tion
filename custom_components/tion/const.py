@@ -11,6 +11,7 @@ from homeassistant.components.climate.const import (
     PRESET_AWAY,
     PRESET_BOOST,
     PRESET_NONE,
+    PRESET_SLEEP,
     SUPPORT_PRESET_MODE,
     SUPPORT_TARGET_TEMPERATURE,
     SUPPORT_FAN_MODE,
