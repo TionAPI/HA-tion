@@ -181,6 +181,16 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
         return self._cur_temp
 
     @property
+    def min_temp(self) -> float:
+        """Minimum temperature that allowed by Tion breezer."""
+        return 0
+
+    @property
+    def max_temp(self) -> float:
+        """Maximum temperature that allowed by Tion breezer."""
+        return 30
+
+    @property
     def hvac_mode(self):
         """Return current operation."""
         if self._is_on:
