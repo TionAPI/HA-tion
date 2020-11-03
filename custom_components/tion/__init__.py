@@ -1,8 +1,8 @@
 """The Tion breezer component."""
 import logging
 import datetime
-from bluepy import btle
 from tion_btle.s3 import s3 as tion
+from tion_btle.tion import TionException
 from .const import DOMAIN, TION_SCHEMA, CONF_KEEP_ALIVE, CONF_AWAY_TEMP, CONF_MAC
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -88,7 +88,7 @@ class TionInstance:
         response = {}
         if self._next_update <= now or force:
             try:
-                response = self.__tion.get(keep_connection)
+                response = await self.__tion.get(keep_connection)
 
                 self.__out_temp = response["out_temp"]
                 self.__heater_temp = response["heater_temp"]
@@ -100,7 +100,7 @@ class TionInstance:
                 self.__in_temp = response["in_temp"]
                 self.__filter_remain = response["filter_remain"]
                 self._next_update = 0
-            except btle.BTLEDisconnectError as e:
+            except TionException as e:
                 _LOGGER.critical("Got exception %s", str(e))
                 _LOGGER.critical("Will delay next check")
                 self._next_update = now + self._delay
@@ -185,4 +185,4 @@ class TionInstance:
 
         args = ', '.join('%s=%r' % x for x in kwargs.items())
         _LOGGER.info("Need to set: " + args)
-        self.__tion.set(kwargs)
+        await self.__tion.set(kwargs)

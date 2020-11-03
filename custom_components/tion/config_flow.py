@@ -109,10 +109,10 @@ class TionFlow:
         _tion: tion = tion(self._data['mac'])
         result = {}
         try:
-            _tion.pair()
+            await _tion.pair()
             # We should sleep a bit, because immediately connection will cause device disconnected exception while
             # enabling notifications
-            result = _tion.get()
+            result = await _tion.get()
             fw: str = result['fw_version']
         except Exception as e:
             _LOGGER.error("Cannot pair and get data. Result is %s, error: %s" % (result, str(e)))
