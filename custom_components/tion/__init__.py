@@ -74,7 +74,7 @@ class TionInstance:
         await self.hass.config_entries.async_forward_entry_setup(self._config_entry, 'sensor')
 
     async def async_update_state(self, time=None, force: bool = False, keep_connection: bool = False):
-        _LOGGER.warning("Tion instance updated at %s" % time)
+        _LOGGER.debug("Tion instance updated at %s" % time)
 
         def decode_state(state: str) -> bool:
             return True if state == "on" else False

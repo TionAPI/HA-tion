@@ -244,7 +244,7 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
 
     async def async_set_hvac_mode(self, hvac_mode):
         """Set hvac mode."""
-        _LOGGER.warning("Need to set mode to " + hvac_mode)
+        _LOGGER.info("Need to set mode to " + hvac_mode)
         if hvac_mode == self._hvac_mode:
             if hvac_mode == HVAC_MODE_HEAT:
                 hvac_mode = HVAC_MODE_FAN_ONLY
