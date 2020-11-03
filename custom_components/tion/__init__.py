@@ -88,7 +88,7 @@ class TionInstance:
         response = {}
         if self._next_update <= now or force:
             try:
-                response = await self.__tion.get(keep_connection)
+                response = await self.__tion.get()
 
                 self.__out_temp = response["out_temp"]
                 self.__heater_temp = response["heater_temp"]
