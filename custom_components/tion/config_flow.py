@@ -88,7 +88,7 @@ class TionFlow:
                 from tion_btle.s3 import s3 as tion
                 try:
                     _tion: tion = tion(input['mac'])
-                    result = _tion.get()
+                    result = await _tion.get()
                     fw: str = result['fw_version']
                 except Exception as e:
                     _LOGGER.error("Could not get data from breezer. result is %s, error: %s" % (result, str(e)))
