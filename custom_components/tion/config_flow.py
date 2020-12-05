@@ -7,6 +7,7 @@ import datetime
 import voluptuous as vol
 from voluptuous import Schema
 from homeassistant import data_entry_flow
+from tion_btle.s3 import S3 as tion
 
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigEntry
@@ -85,7 +86,6 @@ class TionFlow:
             else:
                 _LOGGER.debug("Going create entry with name %s" % input['name'])
                 _LOGGER.debug(input)
-                from tion_btle.s3 import s3 as tion
                 try:
                     _tion: tion = tion(input['mac'])
                     result = _tion.get()
@@ -104,7 +104,6 @@ class TionFlow:
 
     async def async_step_pair(self, input):
         """Pair host and breezer"""
-        from tion_btle.s3 import s3 as tion
         _LOGGER.debug("Real pairing step")
         _tion: tion = tion(self._data['mac'])
         result = {}
