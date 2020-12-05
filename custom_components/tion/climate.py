@@ -6,7 +6,7 @@ import datetime
 from abc import abstractmethod
 from bluepy import btle
 from typing import Tuple, Callable
-from tion_btle.s3 import s3 as tion
+from tion_btle.s3 import S3 as tion
 from homeassistant.helpers.entity import Entity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -438,7 +438,7 @@ class TionClimateYaml(TionClimateDevice):
 
     async def _async_set_state(self, **kwargs):
         if "is_on" in kwargs:
-            kwargs["status"] = "on" if kwargs["is_on"] else "off"
+            kwargs["state"] = "on" if kwargs["is_on"] else "off"
             del kwargs["is_on"]
         if "heater" in kwargs:
             kwargs["heater"] = "on" if kwargs["heater"] else "off"
@@ -467,10 +467,10 @@ class TionClimateYaml(TionClimateDevice):
 
                 self._cur_temp = response["out_temp"]
                 self._target_temp = response["heater_temp"]
-                self._is_on = decode_state(response["status"])
+                self._is_on = decode_state(response["state"])
                 self._heater = decode_state(response["heater"])
                 self._fan_speed = response["fan_speed"]
-                self._is_heating = decode_state(response["is_heating"])
+                self._is_heating = decode_state(response["heating"])
                 self._fw_version = response["fw_version"]
                 self._hvac_mode = self.hvac_mode
                 self.async_write_ha_state()

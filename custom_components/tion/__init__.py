@@ -2,7 +2,7 @@
 import logging
 import datetime
 from bluepy import btle
-from tion_btle.s3 import s3 as tion
+from tion_btle.s3 import S3 as tion
 from .const import DOMAIN, TION_SCHEMA, CONF_KEEP_ALIVE, CONF_AWAY_TEMP, CONF_MAC
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -92,10 +92,10 @@ class TionInstance:
 
                 self.__out_temp = response["out_temp"]
                 self.__heater_temp = response["heater_temp"]
-                self.__is_on = decode_state(response["status"])
+                self.__is_on = decode_state(response["state"])
                 self.__is_heater_on = decode_state(response["heater"])
                 self.__fan_speed = response["fan_speed"]
-                self.__is_heating = decode_state(response["is_heating"])
+                self.__is_heating = decode_state(response["heating"])
                 self.__fw_version = response["fw_version"]
                 self.__in_temp = response["in_temp"]
                 self.__filter_remain = response["filter_remain"]
@@ -176,7 +176,7 @@ class TionInstance:
 
     async def set(self, **kwargs):
         if "is_on" in kwargs:
-            kwargs["status"] = "on" if kwargs["is_on"] else "off"
+            kwargs["state"] = "on" if kwargs["is_on"] else "off"
             del kwargs["is_on"]
         if "heater" in kwargs:
             kwargs["heater"] = "on" if kwargs["heater"] else "off"

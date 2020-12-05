@@ -7,7 +7,7 @@
   ],
   "requirements": [
     "bluepy==1.3.0",
-    "tion-btle==0.1.3"
+    "tion-btle==1.0.4"
   ],
   "codeowners": [
     "@IATkachenko"
