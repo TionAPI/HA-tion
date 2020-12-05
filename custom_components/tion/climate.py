@@ -259,7 +259,9 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
         elif hvac_mode == HVAC_MODE_FAN_ONLY:
             await self._async_set_state(heater=False, is_on=True)
         elif hvac_mode == HVAC_MODE_OFF:
-            self._last_mode = self._hvac_mode
+            if self.hvac_mode != hvac_mode:
+                # avoid last state override for setting OFF twice.
+                self._last_mode = self._hvac_mode
             await self._async_set_state(is_on=False)
         else:
             _LOGGER.error("Unrecognized hvac mode: %s", hvac_mode)
@@ -372,6 +374,28 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
     @property
     def icon(self):
         return 'mdi:air-purifier'
+
+    async def async_turn_on(self):
+        """ Turn breezer on """
+        if self.hvac_mode != HVAC_MODE_OFF:
+            _LOGGER.debug("Got turn on command in not-OFF state. State is %s" % self.hvac_mode)
+            return True
+
+        # try to restore last state
+        if self._last_mode == HVAC_MODE_OFF or self._last_mode is None:
+            # have no last_mode, let super decide what to do
+            # For now it will be HEAT mode
+            return super().async_turn_on()
+        else:
+            # we may restore last mode. Lets do it!
+            return self.async_set_hvac_mode(self._last_mode)
+
+    async def async_turn_off(self):
+        """ Turn breezer off """
+        if self.hvac_mode == HVAC_MODE_OFF:
+            _LOGGER.debug("Got turn off command in OFF state.")
+            return True
+        return self.async_set_hvac_mode(HVAC_MODE_OFF)
 
 
 class TionClimateEntity(TionClimateDevice):
