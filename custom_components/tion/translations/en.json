@@ -5,6 +5,7 @@
       "user": {
         "title": "Configuration for Tion breezer",
         "data": {
+          "model": "Device model",
           "mac": "Device MAC address",
           "name": "Name for device",
           "away_temp": "Temperature (celsius) for AWAY mode",

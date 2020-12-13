@@ -1,8 +1,11 @@
 """The Tion breezer component."""
 import logging
 import datetime
+from typing import Union
+
 from bluepy import btle
-from tion_btle.s3 import S3 as tion
+from tion_btle.tion import tion
+from tion_btle.s3 import S3
 from .const import DOMAIN, TION_SCHEMA, CONF_KEEP_ALIVE, CONF_AWAY_TEMP, CONF_MAC
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -45,7 +48,7 @@ class TionInstance:
         self.__is_on: bool = None
         self.__is_heater_on: bool = None
         self.__is_heating: bool = None
-        self.__fw_version: str = None
+        self.__fw_version: Union[str, None] = None
         self.__in_temp: int = None
         self.__filter_remain: int = None
 
@@ -53,7 +56,14 @@ class TionInstance:
         self._delay: int = 600
         self._next_update: int = 0
 
-        self.__tion = tion(self.config[CONF_MAC])
+        try:
+            model = self.config['model']
+        except KeyError:
+            _LOGGER.warning("Model was not found in config. Please update integration settings!")
+            _LOGGER.warning("Assume that model is S3")
+            model = 'S3'
+
+        self.__tion: tion = self.getTion(model, self.config[CONF_MAC])
 
         hass.loop.create_task(self.start_up())
 
@@ -96,10 +106,15 @@ class TionInstance:
                 self.__is_heater_on = decode_state(response["heater"])
                 self.__fan_speed = response["fan_speed"]
                 self.__is_heating = decode_state(response["heating"])
-                self.__fw_version = response["fw_version"]
                 self.__in_temp = response["in_temp"]
                 self.__filter_remain = response["filter_remain"]
                 self._next_update = 0
+                if type(self.__tion) is S3:
+                    # Only S3 report firmware version
+                    self.__fw_version = response["fw_version"]
+                else:
+                    self.__fw_version = None
+
             except btle.BTLEDisconnectError as e:
                 _LOGGER.critical("Got exception %s", str(e))
                 _LOGGER.critical("Will delay next check")
@@ -186,3 +201,17 @@ class TionInstance:
         args = ', '.join('%s=%r' % x for x in kwargs.items())
         _LOGGER.info("Need to set: " + args)
         self.__tion.set(kwargs)
+
+    @staticmethod
+    def getTion(model: str, mac: str) -> tion:
+        if model == 'S3':
+            from tion_btle.s3 import S3 as Tion
+        elif model == 'Lite':
+            from tion_btle.lite import Lite as Tion
+        else:
+            raise NotImplementedError("Model '%s' is not supported!" % model)
+        return Tion(mac)
+
+    @property
+    def model(self) -> str:
+        return self.__tion.model

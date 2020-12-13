@@ -6,8 +6,7 @@
     "fan"
   ],
   "requirements": [
-    "bluepy==1.3.0",
-    "tion-btle==1.0.4"
+    "tion-btle==1.1.0"
   ],
   "codeowners": [
     "@IATkachenko"

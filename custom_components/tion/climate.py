@@ -6,7 +6,7 @@ import datetime
 from abc import abstractmethod
 from bluepy import btle
 from typing import Tuple, Callable
-from tion_btle.s3 import S3 as tion
+
 from homeassistant.helpers.entity import Entity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -321,11 +321,6 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
         return 1
 
     @property
-    def device_info(self):
-        return {"identifiers": {(DOMAIN, self.mac)}, "name": self.name, "manufacturer": "Tion", "model": "S3",
-                "sw_version": self._fw_version, "type": None}
-
-    @property
     def unique_id(self):
         return self.mac
 
@@ -414,7 +409,10 @@ class TionClimateEntity(TionClimateDevice):
         self._is_on = self._tion_entry.is_on
         self._heater = self._tion_entry.is_heater_on
         self._is_heating = self._tion_entry.is_heating
-        self._fw_version = self._tion_entry.fw_version
+        try:
+            self._fw_version = self._tion_entry.fw_version
+        except Exception:
+            self._fw_version = None
 
         device_registry = await dr.async_get_registry(self.hass)
         info = self.device_info
@@ -430,10 +428,20 @@ class TionClimateEntity(TionClimateDevice):
 
         self.async_write_ha_state()
 
+    @property
+    def device_info(self):
+        info = {"identifiers": {(DOMAIN, self.mac)}, "name": self.name, "manufacturer": "Tion",
+                "model": self._tion_entry.model, "type": None}
+        if self._fw_version is not None:
+            info['sw_version'] = self._fw_version
+
+        return info
+
 
 class TionClimateYaml(TionClimateDevice):
     def __init__(self, name, mac, target_temp, keep_alive, initial_hvac_mode, away_temp, unit):
         super(TionClimateYaml, self).__init__(name, mac, target_temp, keep_alive, initial_hvac_mode, away_temp, unit)
+        from tion_btle.s3 import S3 as tion
         self._tion = tion(self.mac)
 
     async def _async_set_state(self, **kwargs):

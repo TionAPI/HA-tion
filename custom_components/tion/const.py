@@ -21,6 +21,7 @@ from homeassistant.const import (
     EVENT_HOMEASSISTANT_START,
     PRECISION_WHOLE,
 )
+from voluptuous import All, In
 DOMAIN = 'tion'
 DEFAULT_NAME = "Tion Breezer"
 
@@ -29,10 +30,11 @@ CONF_KEEP_ALIVE = "keep_alive"
 CONF_INITIAL_HVAC_MODE = "initial_hvac_mode"
 CONF_AWAY_TEMP = "away_temp"
 CONF_MAC = "mac"
-SUPPORTED_DEVICES = ['S3']
+SUPPORTED_DEVICES = ['S3', 'Lite']
 SUPPORT_FLAGS = SUPPORT_TARGET_TEMPERATURE | SUPPORT_FAN_MODE
 
 TION_SCHEMA = {
+    'model': {'type': All(str, In(SUPPORTED_DEVICES)), 'required': True},
     'name': {'type': str, 'default': DEFAULT_NAME, 'required': True},
     CONF_MAC: {'type': str, 'required': True},
     CONF_KEEP_ALIVE: {'type': int, 'default': 60, 'required': False},

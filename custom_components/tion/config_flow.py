@@ -3,16 +3,18 @@ import asyncio
 import os
 import logging
 import datetime
+import time
 
 import voluptuous as vol
-from voluptuous import Schema
+
 from homeassistant import data_entry_flow
-from tion_btle.s3 import S3 as tion
+
 
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.util.json import load_json
 from homeassistant.core import callback
+from tion_btle.tion import tion
 
 from .const import DOMAIN, TION_SCHEMA, CONF_KEEP_ALIVE
 
@@ -79,6 +81,7 @@ class TionFlow:
         """user initiates a flow via the user interface."""
 
         if input is not None:
+            result = {}
             self._data = input
             if input['pair']:
                 _LOGGER.debug("Showing pair info")
@@ -87,9 +90,8 @@ class TionFlow:
                 _LOGGER.debug("Going create entry with name %s" % input['name'])
                 _LOGGER.debug(input)
                 try:
-                    _tion: tion = tion(input['mac'])
+                    _tion: tion = self.getTion(input['model'], input['mac'])
                     result = _tion.get()
-                    fw: str = result['fw_version']
                 except Exception as e:
                     _LOGGER.error("Could not get data from breezer. result is %s, error: %s" % (result, str(e)))
                     return self.async_show_form(step_id='add_failed')
@@ -105,14 +107,15 @@ class TionFlow:
     async def async_step_pair(self, input):
         """Pair host and breezer"""
         _LOGGER.debug("Real pairing step")
-        _tion: tion = tion(self._data['mac'])
         result = {}
         try:
+            _tion: tion = self.getTion(input['model'], input['mac'])
             _tion.pair()
             # We should sleep a bit, because immediately connection will cause device disconnected exception while
             # enabling notifications
+            time.sleep(3)
+
             result = _tion.get()
-            fw: str = result['fw_version']
         except Exception as e:
             _LOGGER.error("Cannot pair and get data. Result is %s, error: %s" % (result, str(e)))
             return self.async_show_form(step_id='pair_failed')
@@ -141,6 +144,16 @@ class TionFlow:
                     config = self._config_entry.data
 
         return config
+
+    @staticmethod
+    def getTion(model: str, mac: str) -> tion:
+        if model == 'S3':
+            from tion_btle.s3 import S3 as Tion
+        elif model == 'Lite':
+            from tion_btle.lite import Lite as Tion
+        else:
+            raise NotImplementedError("Model '%s' is not supported!" % model)
+        return Tion(mac)
 
 
 @config_entries.HANDLERS.register(DOMAIN)
