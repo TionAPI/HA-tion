@@ -109,7 +109,8 @@ class TionFlow:
         _LOGGER.debug("Real pairing step")
         result = {}
         try:
-            _tion: tion = self.getTion(input['model'], input['mac'])
+            _LOGGER.debug(self._data)
+            _tion: tion = self.getTion(self._data['model'], self._data['mac'])
             _tion.pair()
             # We should sleep a bit, because immediately connection will cause device disconnected exception while
             # enabling notifications
