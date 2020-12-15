@@ -118,7 +118,8 @@ class TionFlow:
 
             result = _tion.get()
         except Exception as e:
-            _LOGGER.error("Cannot pair and get data. Result is %s, error: %s" % (result, str(e)))
+            _LOGGER.error("Cannot pair and get data. Data is %s, result is %s; %s: %s",
+                          self._data, result, type(e).__name__, str(e))
             return self.async_show_form(step_id='pair_failed')
 
         return self.async_create_entry(title=self._data['name'], data=self._data)
