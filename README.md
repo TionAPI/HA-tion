@@ -1,4 +1,4 @@
-# Custom integration for Tion S3 breezer for Home Assistant
+# Custom integration for Tion S3 and Lite breezers for Home Assistant
 This custom integration will allow your Home assistant to control:
 * fan speed
 * target heater temp
@@ -7,7 +7,7 @@ This custom integration will allow your Home assistant to control:
     * boost
     * away    
 
-of your Tion S3 breezer via bluetooth. If you are prefer control breezer via Magic Air, please follow to https://github.com/airens/tion_home_assistant repository.
+of your Tion S3/Lite breezer via bluetooth. If you are prefer control breezer via Magic Air, please follow to https://github.com/airens/tion_home_assistant repository.
 
 :warning: Please remember that breezer is not heating device and don't try use it for room heating :warning: 
 #### disclaimer: everything that you do, you do at your own peril and risk
@@ -15,7 +15,7 @@ of your Tion S3 breezer via bluetooth. If you are prefer control breezer via Mag
 # How to use
 ## Requirements
   1. BTLE supported host with Home Assistant
-  1. Tion S3 breezer
+  1. Tion S3 or Lite breezer
 
 ## Installation & configuration
 ### HACS installation
@@ -92,4 +92,6 @@ logger:
     custom_components.tion: debug
     tion_btle.tion: debug
     tion_btle.s3: debug
+    tion_btle.lite: debug
+    custom_components.tion.config_flow: debug
 ```
