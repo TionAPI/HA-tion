@@ -434,8 +434,15 @@ class TionClimateEntity(TionClimateDevice):
                 "model": self._tion_entry.model, "type": None}
         if self._fw_version is not None:
             info['sw_version'] = self._fw_version
-
         return info
+
+    @property
+    def device_state_attributes(self):
+        attributes = {
+            'air_mode': self._tion_entry.air_mode,
+            'in_temp': self._tion_entry.in_temp
+        }
+        return attributes
 
 
 class TionClimateYaml(TionClimateDevice):

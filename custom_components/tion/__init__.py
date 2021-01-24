@@ -215,3 +215,7 @@ class TionInstance:
     @property
     def model(self) -> str:
         return self.__tion.model
+
+    @property
+    def air_mode(self) -> str:
+        return self.__tion.mode
