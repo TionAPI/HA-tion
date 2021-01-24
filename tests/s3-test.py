@@ -41,8 +41,12 @@ class TionDelegation(DefaultDelegate):
 class TionTest:
     statuses = ['off', 'on']
     modes = ['recirculation', 'mixed']  # 'recirculation', 'mixed' and 'outside', as Index exception
-    uuid_notify: str = ""
-    uuid_write: str = ""
+
+    uuid = "6e400001-b5a3-f393-e0a9-e50e24dcca9e"
+    uuid_write = "6e400002-b5a3-f393-e0a9-e50e24dcca9e"
+    uuid_notify = "6e400003-b5a3-f393-e0a9-e50e24dcca9e"
+
+
 
     command_prefix = 61  # 0x3d
     command_suffix = 90
@@ -72,6 +76,8 @@ class TionTest:
         self._filter_remain: float = 0.0
         self._error_code: int = 0
         self.__failed_connects: int = 0
+        self.write = None
+        self.notify = None
 
     @property
     def mac(self):
