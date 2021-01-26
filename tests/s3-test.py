@@ -96,7 +96,7 @@ class TionTest:
         finally:
             if not keep_connection:
                 self._disconnect()
-
+        _LOGGER.debug("Got response '%s'", response)
         self._decode_response(response)
         self.__detect_heating_state()
         common = self.__generate_common_json()
@@ -181,7 +181,7 @@ class TionTest:
 
     def _get_data_from_breezer(self):
         have_data_from_breezer: bool = False
-        self._try_write, request = self.get_status_command
+        self._try_write(request=self.get_status_command)
 
         i = 0
         try:
@@ -374,6 +374,10 @@ class TionTest:
         except IndexError:
             mode = 'outside'
         return mode
+
+    def _try_write(self, request: bytearray):
+        _LOGGER.debug("Writing %s to %s", bytes(request).hex(), self.write.uuid)
+        return self.write.write(request)
 
 
 MAC = 'FF:22:F3:1E:F3:A6'
