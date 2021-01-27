@@ -7,6 +7,7 @@ from bluepy import btle
 from bluepy.btle import DefaultDelegate
 
 _LOGGER = logging.getLogger(__name__)
+_LOGGER.setLevel("DEBUG")
 
 
 class TionException(Exception):
