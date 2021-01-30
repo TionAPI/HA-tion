@@ -102,7 +102,7 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
         self._keep_alive = keep_alive
         self._hvac_mode = initial_hvac_mode
         self._last_mode = self._hvac_mode
-        self._saved_target_temp = target_temp or away_temp
+        self._saved_target_temp = None
         self._is_on = False
         self._heater: bool = False
         self._cur_temp = None
@@ -113,7 +113,6 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
         if away_temp:
             self._support_flags = SUPPORT_FLAGS | SUPPORT_PRESET_MODE
         self._away_temp = away_temp
-        self._is_away = False
         self._is_boost: bool = False
         self._saved_fan_mode = 0
 
@@ -122,6 +121,7 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
         self._is_heating: bool = False
         self.target_temp = target_temp
         # tion part
+        self._tion_entry = None
         self._mac = mac
         self._delay = 600  # if we could not connect wait a little
         self._next_update = 0
@@ -144,8 +144,6 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
                     self._target_temp = float(old_state.attributes[ATTR_TEMPERATURE])
             if old_state.attributes.get(ATTR_PRESET_MODE):
                 self._preset = old_state.attributes.get(ATTR_PRESET_MODE)
-            if self.preset_mode == PRESET_AWAY:
-                self._is_away = True
             if not self._hvac_mode and old_state.state:
                 self._hvac_mode = old_state.state
 
@@ -221,11 +219,6 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
         return current_hvac_operation
 
     @property
-    def target_temperature(self):
-        """Return the temperature we try to reach."""
-        return self._target_temp
-
-    @property
     def preset_mode(self):
         """Return the current preset mode, e.g., home, away, temp."""
         return self._preset
@@ -244,13 +237,15 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
 
     async def async_set_hvac_mode(self, hvac_mode):
         """Set hvac mode."""
-        _LOGGER.info("Need to set mode to " + hvac_mode)
+        _LOGGER.info("Need to set mode to %s, current mode is %s", hvac_mode, self.hvac_mode)
         if hvac_mode == self._hvac_mode:
+            # user pressed current mode at UI card. What should we do?
             if hvac_mode == HVAC_MODE_HEAT:
                 hvac_mode = HVAC_MODE_FAN_ONLY
             elif hvac_mode == HVAC_MODE_OFF:
                 try:
-                    hvac_mode = self._last_mode
+                    if self._last_mode:
+                        hvac_mode = self._last_mode
                 except AttributeError:
                     hvac_mode = HVAC_MODE_FAN_ONLY
 
@@ -275,24 +270,38 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
 
     async def async_set_preset_mode(self, preset_mode: str):
         """Set new preset mode."""
-        if preset_mode == PRESET_AWAY and not self._is_away:
-            self._is_away = True
-            self._saved_target_temp = self._target_temp
-            self._target_temp = self._away_temp
-            await self._async_set_state(heater_temp=self._target_temp)
+        actions = []
+        _LOGGER.debug("Going to change preset mode from %s to %s", self.preset_mode, preset_mode)
+        if preset_mode == PRESET_AWAY and self.preset_mode != PRESET_AWAY:
+            _LOGGER.info("Going to AWAY mode. Will save target temperature %s", self.target_temperature)
+            self._saved_target_temp = self.target_temperature
+            actions.append([self._async_set_state, {'heater_temp': self._away_temp}])
+
+        if preset_mode != PRESET_AWAY and self.preset_mode == PRESET_AWAY and self._saved_target_temp:
+            # retuning from away mode
+            _LOGGER.info("Returning from AWAY mode: will set saved temperature %s", self._saved_target_temp)
+            actions.append([self._async_set_state, {'heater_temp': self._saved_target_temp}])
+            self._saved_target_temp = None
 
         if preset_mode == PRESET_BOOST and not self._is_boost:
             self._is_boost = True
             self._saved_fan_mode = int(self.fan_mode)
-            await self.async_set_fan_mode(self.boost_fan_mode)
+            actions.append([self.async_set_fan_mode, {'fan_mode': self.boost_fan_mode}])
         elif preset_mode != PRESET_BOOST and self.preset_mode == PRESET_BOOST:
             # returning from boost mode
             _LOGGER.debug("Returning from boost mode. Going to set fan speed %d" % self._saved_fan_mode)
             self._is_boost = False
-            await self.async_set_fan_mode(self._saved_fan_mode)
+            actions.append([self.async_set_fan_mode, {'fan_mode': self._saved_fan_mode}])
 
         self._preset = preset_mode
-        self.async_write_ha_state()
+        try:
+            self._tion_entry.connect()
+            for a in actions:
+                await a[0](**a[1])
+            self._preset = preset_mode
+            await self._async_update_state()
+        finally:
+            self._tion_entry.disconnect()
 
     @property
     def fan_mode(self):

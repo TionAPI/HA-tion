@@ -219,3 +219,9 @@ class TionInstance:
     @property
     def air_mode(self) -> str:
         return self.__tion.mode
+
+    def connect(self):
+        return self.__tion.connect()
+
+    def disconnect(self):
+        return self.__tion.disconnect()
