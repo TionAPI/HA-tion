@@ -316,10 +316,6 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
             self._tion_entry.disconnect()
 
     @property
-    def fan_mode(self):
-        return self._fan_speed
-
-    @property
     def boost_fan_mode(self) -> int:
         """Fan speed for boost mode
 
