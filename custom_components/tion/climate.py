@@ -114,7 +114,7 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
             self._support_flags = SUPPORT_FLAGS | SUPPORT_PRESET_MODE
         self._away_temp = away_temp
         self._is_boost: bool = False
-        self._saved_fan_mode = 0
+        self._saved_fan_mode = None
 
         self._hvac_list = [HVAC_MODE_HEAT, HVAC_MODE_FAN_ONLY, HVAC_MODE_OFF]
         self._fan_speed = 1
@@ -226,7 +226,7 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
     @property
     def preset_modes(self):
         """Return a list of available preset modes or PRESET_NONE if _away_temp is undefined."""
-        modes = [PRESET_NONE, PRESET_BOOST]
+        modes = [PRESET_NONE, PRESET_BOOST, PRESET_SLEEP]
         if self._away_temp:
             modes.append(PRESET_AWAY)
         return modes
@@ -283,15 +283,27 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
             actions.append([self._async_set_state, {'heater_temp': self._saved_target_temp}])
             self._saved_target_temp = None
 
+        if preset_mode == PRESET_SLEEP and self.preset_mode != PRESET_SLEEP:
+            _LOGGER.info("Going to night mode: will save fan_speed: %s", self.fan_mode)
+            if self._saved_fan_mode is None:
+                self._saved_fan_mode = int(self.fan_mode)
+            actions.append([self.async_set_fan_mode, {'fan_mode': min(int(self.fan_mode), self.sleep_max_fan_mode)}])
+
         if preset_mode == PRESET_BOOST and not self._is_boost:
             self._is_boost = True
-            self._saved_fan_mode = int(self.fan_mode)
+            if self._saved_fan_mode is None:
+                self._saved_fan_mode = int(self.fan_mode)
             actions.append([self.async_set_fan_mode, {'fan_mode': self.boost_fan_mode}])
-        elif preset_mode != PRESET_BOOST and self.preset_mode == PRESET_BOOST:
-            # returning from boost mode
-            _LOGGER.debug("Returning from boost mode. Going to set fan speed %d" % self._saved_fan_mode)
-            self._is_boost = False
-            actions.append([self.async_set_fan_mode, {'fan_mode': self._saved_fan_mode}])
+
+        if self.preset_mode in [PRESET_BOOST, PRESET_SLEEP] and preset_mode not in [PRESET_BOOST, PRESET_SLEEP]:
+            # returning from boost or sleep mode
+            _LOGGER.info("Returning from %s mode. Going to set fan speed %d", self.preset_mode, self._saved_fan_mode)
+            if self.preset_mode == PRESET_BOOST:
+                self._is_boost = False
+
+            if self._saved_fan_mode is not None:
+                actions.append([self.async_set_fan_mode, {'fan_mode': self._saved_fan_mode}])
+                self._saved_fan_mode = None
 
         self._preset = preset_mode
         try:
@@ -314,6 +326,11 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
         :return: maximum of supported fan_modes
         """
         return max(self.fan_modes)
+
+    @property
+    def sleep_max_fan_mode(self) -> int:
+        """Maximum fan speed for sleep mode"""
+        return 2
 
     @property
     def fan_modes(self):
@@ -348,6 +365,12 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
         await self.restore_states()
 
     async def async_set_fan_mode(self, fan_mode):
+        if self.preset_mode == PRESET_SLEEP:
+            if int(fan_mode) > self.sleep_max_fan_mode:
+                _LOGGER.info("Fan speed %s was required, but I'm in SLEEP mode, so it should not be greater than %d",
+                             self.sleep_max_fan_mode)
+                fan_mode = self.sleep_max_fan_mode
+
         if (self.preset_mode == PRESET_BOOST and self._is_boost) and fan_mode != self.boost_fan_mode:
             _LOGGER.debug("I'm in boost mode. Will ignore requested fan speed %s" % fan_mode)
             fan_mode = self.boost_fan_mode
