@@ -432,8 +432,12 @@ class TionClimateEntity(TionClimateDevice):
         return self._tion_entry.out_temp
 
     async def _async_set_state(self, **kwargs):
-        await self._tion_entry.set(**kwargs)
-        await self._async_update_state(force=True, keep_connection=False)
+        try:
+            self._tion_entry.connect()
+            await self._tion_entry.set(**kwargs)
+            await self._async_update_state(force=True, keep_connection=False)
+        finally:
+            self._tion_entry.disconnect()
 
     async def _async_update_state(self, time=None, force: bool = False, keep_connection: bool = False) -> dict:
         """called every self._keep_alive"""
