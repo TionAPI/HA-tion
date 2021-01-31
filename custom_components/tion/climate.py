@@ -244,7 +244,14 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
                     hvac_mode = HVAC_MODE_FAN_ONLY
 
         if hvac_mode == HVAC_MODE_HEAT:
-            await self._async_set_state(heater=True, is_on=True)
+            saved_target_temp = self.target_temperature
+            try:
+                self._tion_entry.connect()
+                await self._async_set_state(heater=True, is_on=True)
+                if self.hvac_mode == HVAC_MODE_FAN_ONLY:
+                    await self.async_set_temperature(**{ATTR_TEMPERATURE: saved_target_temp})
+            finally:
+                self._tion_entry.disconnect()
         elif hvac_mode == HVAC_MODE_FAN_ONLY:
             await self._async_set_state(heater=False, is_on=True)
         elif hvac_mode == HVAC_MODE_OFF:
