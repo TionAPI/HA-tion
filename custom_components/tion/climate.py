@@ -100,8 +100,7 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
 
         self._name = name
         self._keep_alive = keep_alive
-        self._hvac_mode = initial_hvac_mode
-        self._last_mode = self._hvac_mode
+        self._last_mode = None
         self._saved_target_temp = None
         self._is_on = False
         self._heater: bool = False
@@ -144,8 +143,6 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
                     self._target_temp = float(old_state.attributes[ATTR_TEMPERATURE])
             if old_state.attributes.get(ATTR_PRESET_MODE):
                 self._preset = old_state.attributes.get(ATTR_PRESET_MODE)
-            if not self._hvac_mode and old_state.state:
-                self._hvac_mode = old_state.state
 
         else:
             # No previous state, try and restore defaults
@@ -153,10 +150,6 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
                 self._target_temp = self.target_temp
 
             _LOGGER.warning("No previously saved temperature, setting to %s", self._target_temp)
-
-        # Set default state to off
-        if not self._hvac_mode:
-            self._hvac_mode = HVAC_MODE_OFF
 
     @property
     def should_poll(self):
@@ -238,7 +231,7 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
     async def async_set_hvac_mode(self, hvac_mode):
         """Set hvac mode."""
         _LOGGER.info("Need to set mode to %s, current mode is %s", hvac_mode, self.hvac_mode)
-        if hvac_mode == self._hvac_mode:
+        if hvac_mode == self.hvac_mode:
             # user pressed current mode at UI card. What should we do?
             if hvac_mode == HVAC_MODE_HEAT:
                 hvac_mode = HVAC_MODE_FAN_ONLY
@@ -246,6 +239,7 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
                 try:
                     if self._last_mode:
                         hvac_mode = self._last_mode
+                        self._last_mode = None
                 except AttributeError:
                     hvac_mode = HVAC_MODE_FAN_ONLY
 
@@ -254,12 +248,12 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
         elif hvac_mode == HVAC_MODE_FAN_ONLY:
             await self._async_set_state(heater=False, is_on=True)
         elif hvac_mode == HVAC_MODE_OFF:
-            self._last_mode = self._hvac_mode
+            if self._last_mode is None:
+                self._last_mode = self.hvac_mode
             await self._async_set_state(is_on=False)
         else:
             _LOGGER.error("Unrecognized hvac mode: %s", hvac_mode)
             return
-        self._hvac_mode = hvac_mode
         # Ensure we update the current operation after changing the mode
         self.async_write_ha_state()
 
@@ -515,7 +509,6 @@ class TionClimateYaml(TionClimateDevice):
                 self._fan_speed = response["fan_speed"]
                 self._is_heating = decode_state(response["heating"])
                 self._fw_version = response["fw_version"]
-                self._hvac_mode = self.hvac_mode
                 self.async_write_ha_state()
                 self._next_update = 0
                 if self.fan_mode != self.boost_fan_mode and (self._is_boost or self.preset_mode == PRESET_BOOST):
