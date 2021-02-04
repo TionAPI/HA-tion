@@ -63,7 +63,7 @@ class TionSensor(Entity):
     @property
     def unit_of_measurement(self):
         """Return the unit of measurement."""
-        return TEMP_CELSIUS if self._sensor_type == 'input temperature' else None
+        return TEMP_CELSIUS if self._sensor_type in ['input temperature', 'output temperature'] else None
 
     @property
     def should_poll(self):
