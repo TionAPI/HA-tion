@@ -46,5 +46,6 @@ TION_SCHEMA = {
 # mapping for sensor name and field of response
 TION_SENSORS = {
     'input temperature': 'in_temp',
+    'output temperature': 'out_temp',
     'filters remain': 'filter_remain'
 }
