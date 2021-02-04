@@ -9,6 +9,7 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
+from . import TionInstance
 from .const import DOMAIN, TION_SENSORS
 
 _LOGGER = logging.getLogger(__name__)
@@ -43,6 +44,7 @@ class TionSensor(Entity):
         self._entry_id = entry_id
         self._state = None
         self.hass = hass
+        self._tion_instance: TionInstance = self.hass.data[DOMAIN][self._entry_id]
 
         _LOGGER.info("Init of sensor %s for %s (%s) " % (
             sensor_type, entry_id, self.hass.data[DOMAIN][self._entry_id].name
@@ -51,15 +53,15 @@ class TionSensor(Entity):
     @property
     def name(self):
         """Return the name of the sensor."""
-        return self.hass.data[DOMAIN][self._entry_id].name + ' ' + self._sensor_type
+        return self._tion_instance.name + ' ' + self._sensor_type
 
     @property
     def state(self):
         """Return the state of the sensor."""
         if self._sensor_type == 'input temperature':
-            return self.hass.data[DOMAIN][self._entry_id].in_temp
+            return self._tion_instance.in_temp
         elif self._sensor_type == 'filters remain':
-            return self.hass.data[DOMAIN][self._entry_id].filter_remain
+            return self._tion_instance.filter_remain
 
     @property
     def unit_of_measurement(self):
@@ -79,3 +81,7 @@ class TionSensor(Entity):
     @property
     def unique_id(self):
         return self.name + " " + self._sensor_type
+
+    @property
+    def device_info(self):
+        return self._tion_instance.device_info

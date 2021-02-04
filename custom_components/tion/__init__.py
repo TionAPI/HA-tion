@@ -225,3 +225,11 @@ class TionInstance:
 
     def disconnect(self):
         return self.__tion.disconnect()
+
+    @property
+    def device_info(self):
+        info = {"identifiers": {(DOMAIN, self.mac)}, "name": self.name, "manufacturer": "Tion",
+                "model": self.model, "type": None}
+        if self.fw_version is not None:
+            info['sw_version'] = self.fw_version
+        return info

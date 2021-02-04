@@ -452,11 +452,7 @@ class TionClimateEntity(TionClimateDevice):
 
     @property
     def device_info(self):
-        info = {"identifiers": {(DOMAIN, self.mac)}, "name": self.name, "manufacturer": "Tion",
-                "model": self._tion_entry.model, "type": None}
-        if self._fw_version is not None:
-            info['sw_version'] = self._fw_version
-        return info
+        return self._tion_entry.device_info
 
     @property
     def device_state_attributes(self):
