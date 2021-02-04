@@ -58,10 +58,7 @@ class TionSensor(Entity):
     @property
     def state(self):
         """Return the state of the sensor."""
-        if self._sensor_type == 'input temperature':
-            return self._tion_instance.in_temp
-        elif self._sensor_type == 'filters remain':
-            return self._tion_instance.filter_remain
+        return getattr(self._tion_instance, TION_SENSORS[self._sensor_type])
 
     @property
     def unit_of_measurement(self):
