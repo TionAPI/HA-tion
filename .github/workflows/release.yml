@@ -49,7 +49,7 @@ jobs:
   create_post:
     runs-on: ubuntu-latest
     needs: changes
-    name: patreon post
+    name: "patreon post"
     if: ${{ needs.changes.outputs.skipped == 'false' }}
     steps:
       - name: post
