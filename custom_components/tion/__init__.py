@@ -2,6 +2,7 @@
 import logging
 import datetime
 from typing import Union
+import math
 
 from bluepy import btle
 from tion_btle.tion import tion
@@ -107,7 +108,7 @@ class TionInstance:
                 self.__fan_speed = response["fan_speed"]
                 self.__is_heating = decode_state(response["heating"])
                 self.__in_temp = response["in_temp"]
-                self.__filter_remain = response["filter_remain"]
+                self.__filter_remain = math.ceil(response["filter_remain"])
                 self._next_update = 0
                 if type(self.__tion) is S3:
                     # Only S3 report firmware version
