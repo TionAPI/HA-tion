@@ -46,7 +46,7 @@ jobs:
           git config user.email "github-actions@no_spam.please"
       - name: Update version file
         id: update
-        run: sed -e "s/%%%VERSION%%%/${{ env.NEW_VERSION }}/" ./custom_components/tion/manifest.json.tpl >custom_components/sleep_as_android/manifest.json
+        run: sed -e "s/%%%VERSION%%%/${{ env.NEW_VERSION }}/" ./custom_components/tion/manifest.json.tpl >custom_components/tion/manifest.json
 
       - name: Commit
         id: commit
