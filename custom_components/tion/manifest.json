@@ -11,5 +11,6 @@
   "codeowners": [
     "@IATkachenko"
   ],
-  "config_flow": true
+  "config_flow": true,
+  "version": "1.7.2",
 }
