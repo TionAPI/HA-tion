@@ -1,6 +1,7 @@
 {
   "domain": "tion",
   "name": "Tion breezer",
+  "version": "1.7.1",
   "documentation": "https://github.com/TionAPI/HA-tion/wiki",
   "dependencies": [
     "fan"
