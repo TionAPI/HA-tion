@@ -52,7 +52,7 @@ jobs:
         id: commit
         run: |
           git commit -m "ci: version update" custom_components/tion/manifest.json
-          git push origin main
+          git push origin master
   release:
     name: "Create release"
     needs: [ changes, version ]
