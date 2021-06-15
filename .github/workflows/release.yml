@@ -81,7 +81,7 @@ jobs:
       - name: "Check out repository"
         uses: actions/checkout@v1
         with:
-          ref:  "v${{ needs.changes.outputs.tag }}"
+          ref:  "${{ needs.changes.outputs.tag }}"
       - name: "Set package name"
         working-directory: ./custom_components
         run: |
