@@ -53,7 +53,7 @@ jobs:
         run: |
           git commit -m "ci(manifest): version update to ${{ env.NEW_VERSION }}" custom_components/tion/manifest.json          
           git push origin master
-          git tag -f -a v${{ env.NEW_VERSION }}
+          git tag -f -a -m "v${{ env.NEW_VERSION }}" v${{ env.NEW_VERSION }}
           git push -f --tags
   release:
     name: "Create release"
