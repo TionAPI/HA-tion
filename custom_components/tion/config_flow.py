@@ -151,6 +151,8 @@ class TionFlow:
     def getTion(model: str, mac: str) -> tion:
         if model == 'S3':
             from tion_btle.s3 import S3 as Tion
+        elif model == 'S4':
+            from tion_btle.s4 import S4 as Tion
         elif model == 'Lite':
             from tion_btle.lite import Lite as Tion
         else:
