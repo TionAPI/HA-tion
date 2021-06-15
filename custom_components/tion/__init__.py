@@ -7,6 +7,7 @@ import math
 from bluepy import btle
 from tion_btle.tion import tion
 from tion_btle.s3 import S3
+from tion_btle.s4 import S4
 from .const import DOMAIN, TION_SCHEMA, CONF_KEEP_ALIVE, CONF_AWAY_TEMP, CONF_MAC
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -207,6 +208,8 @@ class TionInstance:
     def getTion(model: str, mac: str) -> tion:
         if model == 'S3':
             from tion_btle.s3 import S3 as Tion
+        elif model == 'S4':
+            from tion_btle.s4 import S4 as Tion
         elif model == 'Lite':
             from tion_btle.lite import Lite as Tion
         else:
