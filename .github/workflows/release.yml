@@ -51,10 +51,8 @@ jobs:
       - name: Commit
         id: commit
         run: |
-          git commit -m "ci(manifest): version update to ${{ env.NEW_VERSION }}" custom_components/tion/manifest.json          
-          git push origin master
-          git tag -f -a -m "v${{ env.NEW_VERSION }}" v${{ env.NEW_VERSION }}
-          git push -f --tags
+          git commit -m "ci(manifest): version update to ${{ env.NEW_VERSION }}" custom_components/tion/manifest.json && git push origin master || true
+          git tag -f -a -m "v${{ env.NEW_VERSION }}" v${{ env.NEW_VERSION }} && git push -f --tags || true
   release:
     name: "Create release"
     needs: [ changes, version ]
