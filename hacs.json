@@ -1,6 +1,8 @@
- {
+{
   "name": "Tion breezer",
   "country": "RU",
   "render_readme": true,
-  "domains": ["climate"]
+  "domains": ["climate"],
+  "zip_release": true,
+  "filename": "tion.zip"
 }
