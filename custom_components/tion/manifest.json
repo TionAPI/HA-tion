@@ -12,5 +12,5 @@
     "@IATkachenko"
   ],
   "config_flow": true,
-  "version": "1.8.4"
+  "version": "2.0.0"
 }
