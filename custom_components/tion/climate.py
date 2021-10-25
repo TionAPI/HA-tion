@@ -157,11 +157,6 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
         return False
 
     @property
-    def name(self):
-        """Return the name of the thermostat."""
-        return self._name
-
-    @property
     def temperature_unit(self):
         """Return the unit of measurement."""
         return TEMP_CELSIUS
