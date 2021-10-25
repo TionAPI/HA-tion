@@ -200,19 +200,17 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
     async def async_set_hvac_mode(self, hvac_mode):
         """Set hvac mode."""
         _LOGGER.info("Need to set mode to %s, current mode is %s", hvac_mode, self.hvac_mode)
-        if hvac_mode == self.hvac_mode:
-            # user pressed current mode at UI card. What should we do?
-            if hvac_mode == HVAC_MODE_HEAT:
-                hvac_mode = HVAC_MODE_FAN_ONLY
-            elif hvac_mode == HVAC_MODE_OFF:
-                try:
-                    if self._last_mode:
-                        hvac_mode = self._last_mode
-                        self._last_mode = None
-                except AttributeError:
-                    hvac_mode = HVAC_MODE_FAN_ONLY
+        if self.hvac_mode == hvac_mode:
+            # Do nothing if mode is same
+            _LOGGER.debug(f"{self.name} is asked for mode {hvac_mode}, but it is already in {self.hvac_mode}. Do "
+                          f"nothing.")
+            pass
+        elif hvac_mode == HVAC_MODE_OFF:
+            # Keep last mode while turning off. May be used while calling climate turn_on service
+            self._last_mode = self.hvac_mode
+            await self._async_set_state(is_on=False)
 
-        if hvac_mode == HVAC_MODE_HEAT:
+        elif hvac_mode == HVAC_MODE_HEAT:
             saved_target_temp = self.target_temperature
             try:
                 self._tion_entry.connect()
@@ -223,10 +221,7 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
                 self._tion_entry.disconnect()
         elif hvac_mode == HVAC_MODE_FAN_ONLY:
             await self._async_set_state(heater=False, is_on=True)
-        elif hvac_mode == HVAC_MODE_OFF:
-            if self._last_mode is None:
-                self._last_mode = self.hvac_mode
-            await self._async_set_state(is_on=False)
+
         else:
             _LOGGER.error("Unrecognized hvac mode: %s", hvac_mode)
             return
