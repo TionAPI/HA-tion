@@ -1,17 +1,13 @@
 """The Tion breezer component."""
 import logging
-import datetime
 from typing import Union
 import math
 
 from bluepy import btle
 from tion_btle.tion import tion
-from tion_btle.s3 import S3
-from tion_btle.s4 import S4
 from .const import DOMAIN, TION_SCHEMA, CONF_KEEP_ALIVE, CONF_AWAY_TEMP, CONF_MAC
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.event import async_track_time_interval
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -111,7 +107,7 @@ class TionInstance:
                 self.__in_temp = response["in_temp"]
                 self.__filter_remain = math.ceil(response["filter_remain"])
                 self._next_update = 0
-                if type(self.__tion) is S3:
+                if self.__tion.model == "S3":
                     # Only S3 report firmware version
                     self.__fw_version = response["fw_version"]
                 else:
