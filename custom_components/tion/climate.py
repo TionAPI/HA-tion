@@ -55,34 +55,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         devices.append(mac)
         async_add_devices([TionClimateEntity(config, config_entry.entry_id, hass)])
     else:
-        _LOGGER.warning("Device with mac %s was already configured via configuration.yaml" % mac)
-        _LOGGER.warning(
-            "Please use UI configuration. Support for configuration via configuration.yaml will be dropped in v2.0.0")
+        _LOGGER.warning(f"Device {mac} is already configured! ")
     return True
-
-
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    """Set up the generic thermostat platform."""
-    mac = config.get(CONF_MAC)
-    if mac not in devices:
-        devices.append(mac)
-        async_add_entities(
-            [
-                TionClimateYaml(
-                    config.get(CONF_NAME),
-                    config.get(CONF_MAC),
-                    config.get(CONF_TARGET_TEMP),
-                    config.get(CONF_KEEP_ALIVE),
-                    config.get(CONF_INITIAL_HVAC_MODE),
-                    config.get(CONF_AWAY_TEMP),
-                    hass.config.units.temperature_unit,
-                )
-            ]
-        )
-    else:
-        _LOGGER.warning("Device with mac %s was already configured via user interface" % mac)
-        _LOGGER.warning(
-            "Please use UI configuration. Support for configuration via configuration.yaml will be dropped in v2.0.0")
 
 
 class TionClimateDevice(ClimateEntity, RestoreEntity):
@@ -463,67 +437,3 @@ class TionClimateEntity(TionClimateDevice):
             'in_temp': self._tion_entry.in_temp
         }
         return attributes
-
-
-class TionClimateYaml(TionClimateDevice):
-    def __init__(self, name, mac, target_temp, keep_alive, initial_hvac_mode, away_temp, unit):
-        super(TionClimateYaml, self).__init__(name, mac, target_temp, keep_alive, initial_hvac_mode, away_temp, unit)
-        from tion_btle.s3 import S3 as tion
-        self._tion = tion(self.mac)
-
-    async def _async_set_state(self, **kwargs):
-        if "is_on" in kwargs:
-            kwargs["state"] = "on" if kwargs["is_on"] else "off"
-            del kwargs["is_on"]
-        if "heater" in kwargs:
-            kwargs["heater"] = "on" if kwargs["heater"] else "off"
-        if "fan_speed" in kwargs:
-            kwargs["fan_speed"] = int(kwargs["fan_speed"])
-
-        args = ', '.join('%s=%r' % x for x in kwargs.items())
-        _LOGGER.info("Need to set: " + args)
-        self._tion.set(kwargs)
-        await self._async_update_state(force=True, keep_connection=False)
-
-    async def _async_update_state(self, time=None, force: bool = False, keep_connection: bool = False) -> dict:
-        def decode_state(state: str) -> bool:
-            return True if state == "on" else False
-
-        _LOGGER.debug("Update fired force = " + str(force) + ". Keep connection is " + str(keep_connection))
-        if time:
-            _LOGGER.debug("Now is %s", time)
-            now = int(time.timestamp())
-        else:
-            now = 0
-
-        if self._next_update <= now or force:
-            try:
-                response = self._tion.get(keep_connection)
-
-                self._cur_temp = response["out_temp"]
-                self._target_temp = response["heater_temp"]
-                self._is_on = decode_state(response["state"])
-                self._heater = decode_state(response["heater"])
-                self._fan_speed = response["fan_speed"]
-                self._is_heating = decode_state(response["heating"])
-                self._fw_version = response["fw_version"]
-                self.async_write_ha_state()
-                self._next_update = 0
-                if self.fan_mode != self.boost_fan_mode and (self._is_boost or self.preset_mode == PRESET_BOOST):
-                    _LOGGER.warning(
-                        "I'm in boost mode, but current speed %d is not equal boost speed %d. Dropping boost mode" % (
-                            self.fan_mode, self.boost_fan_mode))
-                    self._is_boost = False
-                    self._preset = PRESET_NONE
-            except btle.BTLEDisconnectError as e:
-                _LOGGER.critical("Got exception %s", str(e))
-                _LOGGER.critical("Will delay next check")
-                self._next_update = now + self._delay
-                response = {}
-            except Exception as e:
-                _LOGGER.critical('Response is %s' % response)
-                raise e
-        else:
-            response = {}
-
-        return response

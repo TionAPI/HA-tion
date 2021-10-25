@@ -9,7 +9,6 @@ import voluptuous as vol
 
 from homeassistant import data_entry_flow
 
-
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.util.json import load_json
@@ -49,7 +48,7 @@ class TionFlow:
         return result
 
     @staticmethod
-    def __add_value_from_yaml_config(config: dict, key: str) -> dict:
+    def __add_value_from_saved_settings(config: dict, key: str) -> dict:
         result = {}
         try:
             value = config[key].seconds if isinstance(config[key], datetime.timedelta) else config[key]
@@ -60,18 +59,13 @@ class TionFlow:
             pass
 
         return result
-        
-    def __add_value_from_saved_settings(self, config: dict, key: str) -> dict:
-        return self.__add_value_from_yaml_config(config, key)
-      
-    def _build_schema(self, config: dict) -> None:
-        config = self.__get_my_platform(config)
+
+    def _build_schema(self) -> None:
 
         for k in TION_SCHEMA.keys():
             type = vol.Required if TION_SCHEMA[k]['required'] else vol.Optional
             options = {}
             options.update(self.__add_default_value(self.config, k))
-            options.update(self.__add_value_from_yaml_config(config, k))
             options.update(self.__add_value_from_saved_settings(self.config, k))
             if self._retry:
                 options.update(self.__add_value_from_saved_settings(self._data, k))
@@ -97,11 +91,8 @@ class TionFlow:
                     return self.async_show_form(step_id='add_failed')
 
                 return self.async_create_entry(title=input['name'], data=input)
-        try:
-            config = self.hass.data['climate'].config['climate']
-        except KeyError:
-            config = {}
-        self._build_schema(config)
+
+        self._build_schema()
         return self.async_show_form(step_id="user", data_schema=self._schema)
 
     async def async_step_pair(self, input):
@@ -118,8 +109,8 @@ class TionFlow:
 
             result = _tion.get()
         except Exception as e:
-            _LOGGER.error("Cannot pair and get data. Data is %s, result is %s; %s: %s",
-                          self._data, result, type(e).__name__, str(e))
+            _LOGGER.error("Cannot pair and get data. Data is %s, result is %s; %s: %s", self._data, result,
+                          type(e).__name__, str(e))
             return self.async_show_form(step_id='pair_failed')
 
         return self.async_create_entry(title=self._data['name'], data=self._data)

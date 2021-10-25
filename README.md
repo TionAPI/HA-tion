@@ -30,9 +30,8 @@ of your Tion S3/S4/Lite breezer via bluetooth. If you are prefer control breezer
   1. click "plus" button;
   1. type "Tion" in search field;
   1. click on "Tion breezer integration";
-  1. fill fields (values will be imported from configuration.yaml if you used climate.tion component before);
-  1. click "Next" and follow instructions;
-  1. remove climate.tion from configuration.yaml;
+  1. fill fields;
+  1. click "Next" and follow instructions;  
   1. restart Home Assistant.
   
   Repeat this steps for every device that you are going to use with home assistant.
