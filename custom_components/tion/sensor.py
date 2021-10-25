@@ -17,7 +17,7 @@ _LOGGER = logging.getLogger(__name__)
 SCAN_INTERVAL = timedelta(seconds=30)
 
 
-async def async_setup_platform(hass: HomeAssistant, config, async_add_entities, discovery_info=None):
+async def async_setup_platform(_hass: HomeAssistant, _config, _async_add_entities, _discovery_info=None):
     _LOGGER.critical("Sensors configuration via configuration.yaml is not supported!")
     return False
 
