@@ -1,23 +1,17 @@
 """Adds support for generic thermostat units."""
-import asyncio
 import logging
-import time
+
 import datetime
 from abc import abstractmethod
-from bluepy import btle
-from typing import Tuple, Callable
-
-from homeassistant.helpers.entity import Entity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.const import TEMP_CELSIUS
 import voluptuous as vol
 
 from homeassistant.components.climate import ClimateEntity
-from homeassistant.core import callback
-from homeassistant.helpers import condition, device_registry as dr
+from homeassistant.helpers import device_registry as dr
 import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.event import (async_track_state_change, async_track_time_interval, )
+from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.restore_state import RestoreEntity
 from .const import *
 
