@@ -137,18 +137,13 @@ class TionInstance:
         return self.config[CONF_AWAY_TEMP] if CONF_AWAY_TEMP in self.config else TION_SCHEMA[CONF_AWAY_TEMP]['default']
 
     @property
-    def keep_alive(self) -> int:
-        """Update interval"""
-        return self.config[CONF_KEEP_ALIVE] if CONF_KEEP_ALIVE in self.config else TION_SCHEMA[CONF_KEEP_ALIVE][
-            'default']
-
-    @property
     def name(self) -> str:
         """Instance name"""
         return self.config['name'] if 'name' in self.config else TION_SCHEMA['name']['default']
 
     @property
     def keep_alive(self) -> int:
+        """Update interval"""
         return self.__keep_alive
 
     @keep_alive.setter
