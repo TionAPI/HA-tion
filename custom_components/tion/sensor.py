@@ -77,7 +77,7 @@ class TionSensor(Entity):
 
     @property
     def unique_id(self):
-        return self.name + " " + self._sensor_type
+        return self._tion_instance.mac.replace(":", "_") + "_" + self._sensor_type
 
     @property
     def device_info(self):
