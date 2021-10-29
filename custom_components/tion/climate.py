@@ -355,6 +355,20 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
     def icon(self):
         return 'mdi:air-purifier'
 
+    async def turn_on(self):
+        """
+        Turn breezer on. Tries to restore last state. Use HEAT as backup
+        """
+        if self.hvac_mode != HVAC_MODE_OFF:
+            # do nothing if we already working
+            pass
+        elif self._last_mode is None:
+            await self.async_set_hvac_mode(HVAC_MODE_HEAT)
+        else:
+            await self.async_set_hvac_mode(self._last_mode)
+
+
+
 
 class TionClimateEntity(TionClimateDevice):
     def __init__(self, config: ConfigEntry, entry_id, hass: HomeAssistant):
