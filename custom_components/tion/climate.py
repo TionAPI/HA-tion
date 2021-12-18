@@ -434,7 +434,7 @@ class TionClimateEntity(TionClimateDevice):
         return self._tion_entry.device_info
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         attributes = {
             'air_mode': self._tion_entry.air_mode,
             'in_temp': self._tion_entry.in_temp
