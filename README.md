@@ -1,3 +1,4 @@
+![version_badge](https://img.shields.io/badge/minimum%20HA%20version-2021.12-red)
 # Custom integration for Tion S3, S4 and Lite breezers for Home Assistant
 This custom integration will allow your Home assistant to control:
 * fan speed
