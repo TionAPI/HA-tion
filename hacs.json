@@ -4,5 +4,6 @@
   "render_readme": true,
   "domains": ["climate"],
   "zip_release": true,
-  "filename": "tion.zip"
+  "filename": "tion.zip",
+  "homeassistant":  "2021.12.0"
 }
