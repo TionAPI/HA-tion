@@ -88,12 +88,12 @@ class TionInstance:
         await self.hass.config_entries.async_forward_entry_setup(self._config_entry, 'climate')
         await self.hass.config_entries.async_forward_entry_setup(self._config_entry, 'sensor')
 
+    @staticmethod
+    def _decode_state(state: str) -> bool:
+        return True if state == "on" else False
+
     async def async_update_state(self, time=None, force: bool = False, keep_connection: bool = False):
         _LOGGER.debug("Tion instance updated at %s" % time)
-
-        def decode_state(state: str) -> bool:
-            return True if state == "on" else False
-
         _LOGGER.debug("Update fired force = " + str(force) + ". Keep connection is " + str(keep_connection))
         if time:
             _LOGGER.debug("Now is %s", time)
@@ -103,16 +103,7 @@ class TionInstance:
         response = {}
         if self._next_update <= now or force:
             try:
-                response = await btle_exec_helper(self.__tion.get, keep_connection)
-
-                self.__out_temp = response["out_temp"]
-                self.__heater_temp = response["heater_temp"]
-                self.__is_on = decode_state(response["state"])
-                self.__is_heater_on = decode_state(response["heater"])
-                self.__fan_speed = response["fan_speed"]
-                self.__is_heating = decode_state(response["heating"])
-                self.__in_temp = response["in_temp"]
-                self.__filter_remain = math.ceil(response["filter_remain"])
+                response = self.__tion.get(keep_connection)
                 self._next_update = 0
                 if self.__tion.model == "S3":
                     # Only S3 report firmware version
@@ -155,27 +146,27 @@ class TionInstance:
 
     @property
     def fan_speed(self) -> int:
-        return self.__fan_speed
+        return self.__tion.fan_speed
 
     @property
     def heater_temp(self) -> int:
-        return self.__heater_temp
+        return self.__tion.target_temp
 
     @property
     def out_temp(self) -> int:
-        return self.__out_temp
+        return self.__tion.out_temp
 
     @property
     def is_on(self) -> bool:
-        return self.__is_on
+        return self._decode_state(self.__tion.state)
 
     @property
     def is_heater_on(self) -> bool:
-        return self.__is_heater_on
+        return self._decode_state(self.__tion.heater)
 
     @property
     def is_heating(self) -> bool:
-        return self.__is_heating
+        return self._decode_state(self.__tion.heating)
 
     @property
     def fw_version(self) -> str:
@@ -183,11 +174,11 @@ class TionInstance:
 
     @property
     def in_temp(self) -> int:
-        return self.__in_temp
+        return self.__tion.in_temp
 
     @property
     def filter_remain(self) -> int:
-        return self.__filter_remain
+        return math.ceil(self.__tion.filter_remain)
 
     async def set(self, **kwargs):
         if "is_on" in kwargs:
