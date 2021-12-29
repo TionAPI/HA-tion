@@ -207,12 +207,12 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
         elif hvac_mode == HVAC_MODE_HEAT:
             saved_target_temp = self.target_temperature
             try:
-                self._tion_entry.connect()
+                await self._tion_entry.connect()
                 await self._async_set_state(heater=True, is_on=True)
                 if self.hvac_mode == HVAC_MODE_FAN_ONLY:
                     await self.async_set_temperature(**{ATTR_TEMPERATURE: saved_target_temp})
             finally:
-                self._tion_entry.disconnect()
+                await self._tion_entry.disconnect()
         elif hvac_mode == HVAC_MODE_FAN_ONLY:
             await self._async_set_state(heater=False, is_on=True)
 
@@ -266,13 +266,13 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
 
         self._preset = preset_mode
         try:
-            self._tion_entry.connect()
+            await self._tion_entry.connect()
             for a in actions:
                 await a[0](**a[1])
             self._preset = preset_mode
             await self._async_update_state()
         finally:
-            self._tion_entry.disconnect()
+            await self._tion_entry.disconnect()
 
     @property
     def boost_fan_mode(self) -> int:
