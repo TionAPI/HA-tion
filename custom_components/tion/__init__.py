@@ -1,4 +1,6 @@
 """The Tion breezer component."""
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 import logging
 from typing import Union
 import math
@@ -10,6 +12,11 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 _LOGGER = logging.getLogger(__name__)
+_BTLE_COMMAND_EXECUTOR = ThreadPoolExecutor(max_workers=1)
+
+
+async def btle_exec_helper(method, *args, **kwargs):
+    return await asyncio.wrap_future(_BTLE_COMMAND_EXECUTOR.submit(method, *args, **kwargs))
 
 
 async def async_setup(hass, config):
@@ -96,7 +103,7 @@ class TionInstance:
         response = {}
         if self._next_update <= now or force:
             try:
-                response = self.__tion.get(keep_connection)
+                response = await btle_exec_helper(self.__tion.get, keep_connection)
 
                 self.__out_temp = response["out_temp"]
                 self.__heater_temp = response["heater_temp"]
@@ -193,7 +200,7 @@ class TionInstance:
 
         args = ', '.join('%s=%r' % x for x in kwargs.items())
         _LOGGER.info("Need to set: " + args)
-        self.__tion.set(kwargs)
+        await btle_exec_helper(self.__tion.set, kwargs)
 
     @staticmethod
     def getTion(model: str, mac: str) -> tion:
@@ -215,11 +222,11 @@ class TionInstance:
     def air_mode(self) -> str:
         return self.__tion.mode
 
-    def connect(self):
-        return self.__tion.connect()
+    async def connect(self):
+        return await btle_exec_helper(self.__tion.connect)
 
-    def disconnect(self):
-        return self.__tion.disconnect()
+    async def disconnect(self):
+        return await btle_exec_helper(self.__tion.disconnect)
 
     @property
     def device_info(self):
