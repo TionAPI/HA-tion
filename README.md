@@ -37,6 +37,19 @@ of your Tion S3/S4/Lite breezer via bluetooth. If you are prefer control breezer
   
   Repeat this steps for every device that you are going to use with home assistant.
 
+## Usage 
+### Turning on / Turning off
+* calling `climate.set_hvac_mode`. Mode:
+  * `off` will turn off breezer;
+  * `fan_only` will turn brezzer on with turned off heater
+  * `heat` will turn breezer on with tunrned on heater
+  fan speed will not be changed.
+* calling `climate.set_fan_mode`. 
+  * `0` will turn off breezer;
+  * `1`..`6` will turn breezer on.
+  No state (`heater`/`fan_only`) will be changed.
+* ![added_in_version_badge](https://img.shields.io/badge/Since-v2.1.3-red) you may use `climate.turn_on` and `climate.turn_off` services. `climate.turn_on` will turn on breezer into the state it was before being turned off.  
+
 ### Automation example
 automations.yaml:
 ```yaml
