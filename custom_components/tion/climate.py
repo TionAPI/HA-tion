@@ -355,10 +355,11 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
     def icon(self):
         return 'mdi:air-purifier'
 
-    async def turn_on(self):
+    async def async_turn_on(self):
         """
         Turn breezer on. Tries to restore last state. Use HEAT as backup
         """
+        _LOGGER.debug(f"Turning on from {self.hvac_mode} to {self._last_mode}")
         if self.hvac_mode != HVAC_MODE_OFF:
             # do nothing if we already working
             pass
@@ -367,7 +368,9 @@ class TionClimateDevice(ClimateEntity, RestoreEntity):
         else:
             await self.async_set_hvac_mode(self._last_mode)
 
-
+    async def async_turn_off(self):
+        _LOGGER.debug(f"Turning off from {self.hvac_mode}")
+        await self.async_set_hvac_mode(HVAC_MODE_OFF)
 
 
 class TionClimateEntity(TionClimateDevice):
