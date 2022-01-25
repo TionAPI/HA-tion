@@ -328,7 +328,7 @@ class TionClimateEntity(ClimateEntity):
 
     async def _async_set_state(self, **kwargs):
         await self._tion_entry.set(**kwargs)
-        await self._async_update_state(force=True, keep_connection=False)
+        self.async_write_ha_state()
 
     async def _async_update_state(self, time=None, force: bool = False, keep_connection: bool = False) -> None:
         """called every self._keep_alive"""

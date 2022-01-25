@@ -203,6 +203,7 @@ class TionInstance:
         args = ', '.join('%s=%r' % x for x in kwargs.items())
         _LOGGER.info("Need to set: " + args)
         await btle_exec_helper(self.__tion.set, kwargs)
+        self.data.update(kwargs)
 
     @staticmethod
     def getTion(model: str, mac: str) -> tion:
