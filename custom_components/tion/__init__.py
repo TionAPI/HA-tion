@@ -125,6 +125,7 @@ class TionInstance:
         response["heater"] = self._decode_state(response["heater"])
         response["is_heating"] = self._decode_state(response["heating"])
         response["filter_remain"] = math.ceil(response["filter_remain"])
+        response["fan_speed"] = int(response["fan_speed"])
         # Coordinator will do it for use in future
         self.data = response
 
