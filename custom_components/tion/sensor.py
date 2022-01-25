@@ -74,4 +74,4 @@ class TionSensor(SensorEntity):
     @property
     def native_value(self):
         """Return the state of the sensor."""
-        return getattr(self._tion_instance, self.entity_description.key)
+        return self._tion_instance.data.get(self.entity_description.key)

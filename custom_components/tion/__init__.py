@@ -1,4 +1,6 @@
 """The Tion breezer component."""
+from __future__ import annotations
+
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import logging
@@ -69,7 +71,7 @@ class TionInstance:
             model = 'S3'
 
         self.__tion: tion = self.getTion(model, self.config[CONF_MAC])
-
+        self.data = {}
         hass.loop.create_task(self.start_up())
 
     @property
@@ -100,7 +102,7 @@ class TionInstance:
             now = int(time.timestamp())
         else:
             now = 0
-        response = {}
+        response: dict[str, str | bool | int] = {}
         if self._next_update <= now or force:
             try:
                 response = await btle_exec_helper(self.__tion.get, keep_connection)
@@ -118,6 +120,14 @@ class TionInstance:
             except Exception as e:
                 _LOGGER.critical('Response is %s' % response)
                 raise e
+
+        response["is_on"] = self._decode_state(response["state"])
+        response["heater"] = self._decode_state(response["heater"])
+        response["is_heating"] = self._decode_state(response["heating"])
+        response["filter_remain"] = math.ceil(response["filter_remain"])
+        # Coordinator will do it for use in future
+        self.data = response
+
         return True
 
     @property
@@ -146,27 +156,27 @@ class TionInstance:
 
     @property
     def fan_speed(self) -> int:
-        return self.__tion.fan_speed
+        return self.data.get("fan_speed")
 
     @property
     def heater_temp(self) -> int:
-        return self.__tion.target_temp
+        return self.data.get("heater_temp")
 
     @property
     def out_temp(self) -> int:
-        return self.__tion.out_temp
+        return self.data.get("out_temp")
 
     @property
     def is_on(self) -> bool:
-        return self._decode_state(self.__tion.state)
+        return self.data.get("is_on")
 
     @property
     def is_heater_on(self) -> bool:
-        return self._decode_state(self.__tion.heater)
+        return self.data.get("is_heater_on")
 
     @property
     def is_heating(self) -> bool:
-        return self._decode_state(self.__tion.heating)
+        return self.data.get("is_heating")
 
     @property
     def fw_version(self) -> str:
@@ -174,11 +184,11 @@ class TionInstance:
 
     @property
     def in_temp(self) -> int:
-        return self.__tion.in_temp
+        return self.data.get("in_temp")
 
     @property
     def filter_remain(self) -> int:
-        return math.ceil(self.__tion.filter_remain)
+        return self.data.get("filter_remain")
 
     async def set(self, **kwargs):
         if "is_on" in kwargs:
@@ -207,11 +217,11 @@ class TionInstance:
 
     @property
     def model(self) -> str:
-        return self.__tion.model
+        return self.data.get("model")
 
     @property
     def air_mode(self) -> str:
-        return self.__tion.mode
+        return self.data.get("mode")
 
     async def connect(self):
         return await btle_exec_helper(self.__tion.connect)

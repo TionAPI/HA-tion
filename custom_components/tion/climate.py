@@ -96,8 +96,8 @@ class TionClimateEntity(ClimateEntity):
     @property
     def hvac_mode(self):
         """Return current operation."""
-        if self._tion_entry.is_on:
-            if self._tion_entry.is_heater_on:
+        if self._tion_entry.data.get("is_on"):
+            if self._tion_entry.data.get("is_heater_on"):
                 return HVAC_MODE_HEAT
             else:
                 return HVAC_MODE_FAN_ONLY
@@ -114,8 +114,8 @@ class TionClimateEntity(ClimateEntity):
         """Return the current running hvac operation if supported.
         Need to be one of CURRENT_HVAC_*.
         """
-        if self._tion_entry.is_on:
-            if self._tion_entry.is_heating:
+        if self._tion_entry.data.get("is_on"):
+            if self._tion_entry.data.get("is_heating"):
                 current_hvac_operation = CURRENT_HVAC_HEAT
             else:
                 current_hvac_operation = CURRENT_HVAC_FAN
@@ -277,7 +277,7 @@ class TionClimateEntity(ClimateEntity):
         if (self.preset_mode == PRESET_BOOST and self._is_boost) and fan_mode != self.boost_fan_mode:
             _LOGGER.debug("I'm in boost mode. Will ignore requested fan speed %s" % fan_mode)
             fan_mode = self.boost_fan_mode
-        if fan_mode != self.fan_mode or not self._tion_entry.is_on:
+        if fan_mode != self.fan_mode or not self._tion_entry.data.get("is_on"):
             self._fan_speed = fan_mode
             await self._async_set_state(fan_speed=fan_mode, is_on=True)
             self.async_write_ha_state()
@@ -314,17 +314,17 @@ class TionClimateEntity(ClimateEntity):
 
     @property
     def fan_mode(self):
-        return self._tion_entry.fan_speed
+        return self._tion_entry.data.get("fan_speed")
 
     @property
     def target_temperature(self):
         """Return the temperature we try to reach."""
-        return self._tion_entry.heater_temp
+        return self._tion_entry.data.get("heater_temp")
 
     @property
     def current_temperature(self):
         """Return the sensor temperature."""
-        return self._tion_entry.out_temp
+        return self._tion_entry.data.get("out_temp")
 
     async def _async_set_state(self, **kwargs):
         await self._tion_entry.set(**kwargs)
@@ -348,7 +348,7 @@ class TionClimateEntity(ClimateEntity):
     @property
     def extra_state_attributes(self):
         attributes = {
-            'air_mode': self._tion_entry.air_mode,
-            'in_temp': self._tion_entry.in_temp
+            'air_mode': self._tion_entry.data.get("air_mode"),
+            'in_temp': self._tion_entry.data.get("in_temp")
         }
         return attributes
