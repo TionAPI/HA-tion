@@ -4,17 +4,42 @@ Sensors for Tion breezers
 import logging
 from datetime import timedelta
 
+from homeassistant.components.sensor import SensorEntityDescription, SensorDeviceClass, SensorStateClass, SensorEntity
 from homeassistant.const import TEMP_CELSIUS
-from homeassistant.helpers.entity import Entity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from . import TionInstance
-from .const import DOMAIN, TION_SENSORS
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
 SCAN_INTERVAL = timedelta(seconds=30)
+
+SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
+    SensorEntityDescription(
+        key="in_temp",
+        name="input temperature",
+        native_unit_of_measurement=TEMP_CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_registry_enabled_default=True,
+    ),
+    SensorEntityDescription(
+        key="out_temp",
+        name="output temperature",
+        native_unit_of_measurement=TEMP_CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_registry_enabled_default=True,
+    ),
+    SensorEntityDescription(
+        key="filter_remain",
+        name="filters remain",
+        entity_registry_enabled_default=True,
+        entity_category="diagnostic",
+    ),
+)
 
 
 async def async_setup_platform(_hass: HomeAssistant, _config, _async_add_entities, _discovery_info=None):
@@ -22,63 +47,31 @@ async def async_setup_platform(_hass: HomeAssistant, _config, _async_add_entitie
     return False
 
 
-async def async_setup_entry(hass: HomeAssistant, config: ConfigEntry, add_entities):
+async def async_setup_entry(hass: HomeAssistant, config: ConfigEntry, async_add_entities):
     """Set up the sensor entry"""
-    sensors = []
-    for s in TION_SENSORS.keys():
-        sensors.append(TionSensor(hass, s, config.entry_id))
+    tion_instance = hass.data[DOMAIN][config.entry_id]
+    entities: list[TionSensor] = [
+        TionSensor(description, tion_instance) for description in SENSOR_TYPES]
+    async_add_entities(entities)
 
-    add_entities(sensors)
     return True
 
 
-class TionSensor(Entity):
+class TionSensor(SensorEntity):
     """Representation of a sensor."""
 
-    def __init__(self, hass: HomeAssistant, sensor_type: str, entry_id):
+    def __init__(self, description: SensorEntityDescription, instance: TionInstance):
         """Initialize the sensor."""
-        if sensor_type not in TION_SENSORS.keys():
-            raise NotImplementedError('Sensor "%s" is not supported' % sensor_type)
-        self.hass: HomeAssistant = hass
-        self._sensor_type = sensor_type
-        self._entry_id = entry_id
-        self._state = None
-        self.hass = hass
-        self._tion_instance: TionInstance = self.hass.data[DOMAIN][self._entry_id]
 
-        _LOGGER.info("Init of sensor %s for %s (%s) " % (
-            sensor_type, entry_id, self.hass.data[DOMAIN][self._entry_id].name
-        ))
+        self.entity_description = description
+        self._tion_instance: TionInstance = instance
+        self._attr_name = f"{instance.name} {description.name}"
+        self._attr_device_info = instance.device_info
+        self._attr_unique_id = f"{instance.mac}-{description.key}"
+
+        _LOGGER.debug(f"Init of sensor {self.name} ({instance.mac})")
 
     @property
-    def name(self):
-        """Return the name of the sensor."""
-        return self._tion_instance.name + ' ' + self._sensor_type
-
-    @property
-    def state(self):
+    def native_value(self):
         """Return the state of the sensor."""
-        return getattr(self._tion_instance, TION_SENSORS[self._sensor_type])
-
-    @property
-    def unit_of_measurement(self):
-        """Return the unit of measurement."""
-        return TEMP_CELSIUS if self._sensor_type in ['input temperature', 'output temperature'] else None
-
-    @property
-    def should_poll(self):
-        """Return the polling state."""
-        return True
-
-    @property
-    def extra_state_attributes(self):
-        """Return the state attributes."""
-        return {}
-
-    @property
-    def unique_id(self):
-        return self._tion_instance.mac.replace(":", "_") + "_" + self._sensor_type
-
-    @property
-    def device_info(self):
-        return self._tion_instance.device_info
+        return getattr(self._tion_instance, self.entity_description.key)

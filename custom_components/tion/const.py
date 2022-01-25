@@ -42,10 +42,3 @@ TION_SCHEMA = {
     CONF_AWAY_TEMP: {'type': int, 'default': 15, 'required': False},
     'pair': {'type': bool, 'default': True, 'required': False},
 }
-
-# mapping for sensor name and field of response
-TION_SENSORS = {
-    'input temperature': 'in_temp',
-    'output temperature': 'out_temp',
-    'filters remain': 'filter_remain'
-}
