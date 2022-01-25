@@ -103,7 +103,7 @@ class TionInstance:
         response = {}
         if self._next_update <= now or force:
             try:
-                response = self.__tion.get(keep_connection)
+                response = await btle_exec_helper(self.__tion.get, keep_connection)
                 self._next_update = 0
                 if self.__tion.model == "S3":
                     # Only S3 report firmware version
