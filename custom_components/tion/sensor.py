@@ -67,9 +67,9 @@ class TionSensor(SensorEntity):
         self._tion_instance: TionInstance = instance
         self._attr_name = f"{instance.name} {description.name}"
         self._attr_device_info = instance.device_info
-        self._attr_unique_id = f"{instance.mac}-{description.key}"
+        self._attr_unique_id = f"{instance.unique_id}-{description.key}"
 
-        _LOGGER.debug(f"Init of sensor {self.name} ({instance.mac})")
+        _LOGGER.debug(f"Init of sensor {self.name} ({instance.unique_id})")
 
     @property
     def native_value(self):

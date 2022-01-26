@@ -5,6 +5,7 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import logging
 import math
+from functools import cached_property
 
 from bluepy import btle
 from tion_btle.tion import tion
@@ -38,8 +39,6 @@ class TionInstance:
     def __init__(self, hass: HomeAssistant, config_entry: ConfigEntry):
         self.hass: HomeAssistant = hass
         self._config_entry: ConfigEntry = config_entry
-
-        self._entry_id: str = self._config_entry.entry_id
 
         self.__keep_alive: int = 60
         try:
@@ -110,11 +109,6 @@ class TionInstance:
         return True
 
     @property
-    def mac(self):
-        """Device MAC adders"""
-        return self.config[CONF_MAC]
-
-    @property
     def away_temp(self) -> int:
         """Temperature for away mode"""
         return self.config[CONF_AWAY_TEMP] if CONF_AWAY_TEMP in self.config else TION_SCHEMA[CONF_AWAY_TEMP]['default']
@@ -167,8 +161,12 @@ class TionInstance:
 
     @property
     def device_info(self):
-        info = {"identifiers": {(DOMAIN, self.mac)}, "name": self.name, "manufacturer": "Tion",
+        info = {"identifiers": {(DOMAIN, self.unique_id)}, "name": self.name, "manufacturer": "Tion",
                 "model": self.data.get("model"), "type": None}
         if self.data.get("fw_version") is not None:
             info['sw_version'] = self.data.get("fw_version")
         return info
+
+    @cached_property
+    def unique_id(self):
+        return self.__tion.mac
