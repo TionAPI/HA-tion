@@ -38,11 +38,11 @@ devices = []
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: AddEntitiesCallback):
     """Setup entry"""
 
-    mac = hass.data[DOMAIN][config_entry.entry_id].mac
+    mac = hass.data[DOMAIN][config_entry.unique_id].mac
 
     if mac not in devices:
         devices.append(mac)
-        async_add_entities([TionClimateEntity(config_entry.entry_id, hass)])
+        async_add_entities([TionClimateEntity(config_entry.unique_id, hass)])
     else:
         _LOGGER.warning(f"Device {mac} is already configured! ")
     return True
@@ -51,10 +51,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 class TionClimateEntity(ClimateEntity):
     """Representation of a Tion device."""
 
-    def __init__(self, entry_id, hass: HomeAssistant):
-        self._entry_id = entry_id
+    def __init__(self, unique_id, hass: HomeAssistant):
         self.hass: HomeAssistant = hass
-        self._tion_entry: TionInstance = self.hass.data[DOMAIN][self._entry_id]
+        self._tion_entry: TionInstance = self.hass.data[DOMAIN][unique_id]
         self._keep_alive: datetime.timedelta = datetime.timedelta(seconds=self._tion_entry.keep_alive)
 
         self._away_temp = self._tion_entry.away_temp

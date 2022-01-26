@@ -49,7 +49,7 @@ async def async_setup_platform(_hass: HomeAssistant, _config, _async_add_entitie
 
 async def async_setup_entry(hass: HomeAssistant, config: ConfigEntry, async_add_entities):
     """Set up the sensor entry"""
-    tion_instance = hass.data[DOMAIN][config.entry_id]
+    tion_instance = hass.data[DOMAIN][config.unique_id]
     entities: list[TionSensor] = [
         TionSensor(description, tion_instance) for description in SENSOR_TYPES]
     async_add_entities(entities)
