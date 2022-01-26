@@ -4,7 +4,6 @@ from __future__ import annotations
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import logging
-from typing import Union
 import math
 
 from bluepy import btle
@@ -47,17 +46,6 @@ class TionInstance:
             self.__keep_alive = self.config[CONF_KEEP_ALIVE]
         except KeyError:
             pass
-
-        self.__out_temp: int = None
-        self.__fan_speed: int = None
-        self.__heater_temp: int = None
-
-        self.__is_on: bool = None
-        self.__is_heater_on: bool = None
-        self.__is_heating: bool = None
-        self.__fw_version: Union[str, None] = None
-        self.__in_temp: int = None
-        self.__filter_remain: int = None
 
         # delay before next update if we got btle.BTLEDisconnectError
         self._delay: int = 600
@@ -107,11 +95,6 @@ class TionInstance:
             try:
                 response = await btle_exec_helper(self.__tion.get, keep_connection)
                 self._next_update = 0
-                if self.__tion.model == "S3":
-                    # Only S3 report firmware version
-                    self.__fw_version = response["fw_version"]
-                else:
-                    self.__fw_version = None
 
             except btle.BTLEDisconnectError as e:
                 _LOGGER.critical("Got exception %s", str(e))
@@ -121,8 +104,8 @@ class TionInstance:
                 _LOGGER.critical('Response is %s' % response)
                 raise e
 
-        response["is_on"] = self._decode_state(response["state"])
-        response["heater"] = self._decode_state(response["heater"])
+        response["is_on"]: bool = self._decode_state(response["state"])
+        response["heater"]: bool = self._decode_state(response["heater"])
         response["is_heating"] = self._decode_state(response["heating"])
         response["filter_remain"] = math.ceil(response["filter_remain"])
         response["fan_speed"] = int(response["fan_speed"])
@@ -156,38 +139,6 @@ class TionInstance:
         self.__keep_alive = value
 
     @property
-    def fan_speed(self) -> int:
-        return self.data.get("fan_speed")
-
-    @property
-    def heater_temp(self) -> int:
-        return self.data.get("heater_temp")
-
-    @property
-    def out_temp(self) -> int:
-        return self.data.get("out_temp")
-
-    @property
-    def is_on(self) -> bool:
-        return self.data.get("is_on")
-
-    @property
-    def is_heater_on(self) -> bool:
-        return self.data.get("is_heater_on")
-
-    @property
-    def is_heating(self) -> bool:
-        return self.data.get("is_heating")
-
-    @property
-    def fw_version(self) -> str:
-        return self.__fw_version
-
-    @property
-    def in_temp(self) -> int:
-        return self.data.get("in_temp")
-
-    @property
     def filter_remain(self) -> int:
         return self.data.get("filter_remain")
 
@@ -217,14 +168,6 @@ class TionInstance:
             raise NotImplementedError("Model '%s' is not supported!" % model)
         return Tion(mac)
 
-    @property
-    def model(self) -> str:
-        return self.data.get("model")
-
-    @property
-    def air_mode(self) -> str:
-        return self.data.get("mode")
-
     async def connect(self):
         return await btle_exec_helper(self.__tion.connect)
 
@@ -234,7 +177,7 @@ class TionInstance:
     @property
     def device_info(self):
         info = {"identifiers": {(DOMAIN, self.mac)}, "name": self.name, "manufacturer": "Tion",
-                "model": self.model, "type": None}
-        if self.fw_version is not None:
-            info['sw_version'] = self.fw_version
+                "model": self.data.get("model"), "type": None}
+        if self.data.get("fw_version") is not None:
+            info['sw_version'] = self.data.get("fw_version")
         return info
