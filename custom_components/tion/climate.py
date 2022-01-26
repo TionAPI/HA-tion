@@ -60,6 +60,7 @@ class TionClimateEntity(ClimateEntity):
     _attr_temperature_unit = TEMP_CELSIUS
     _attr_should_poll = False
     _attr_preset_modes = [PRESET_NONE, PRESET_BOOST, PRESET_SLEEP]
+    _attr_preset_mode = PRESET_NONE
     _attr_supported_features = SUPPORT_FLAGS | SUPPORT_PRESET_MODE
     _attr_icon = 'mdi:air-purifier'
 
@@ -83,7 +84,6 @@ class TionClimateEntity(ClimateEntity):
         if self._away_temp:
             self._attr_preset_modes.append(PRESET_AWAY)
 
-        self._preset = PRESET_NONE
         self._attr_device_info = self._tion_entry.device_info
         self._attr_name = self._tion_entry.name
         self._attr_unique_id = self._tion_entry.unique_id
@@ -112,11 +112,6 @@ class TionClimateEntity(ClimateEntity):
         else:
             current_hvac_operation = CURRENT_HVAC_OFF
         return current_hvac_operation
-
-    @property
-    def preset_mode(self):
-        """Return the current preset mode, e.g., home, away, temp."""
-        return self._preset
 
     async def async_set_hvac_mode(self, hvac_mode):
         """Set hvac mode."""
@@ -186,12 +181,12 @@ class TionClimateEntity(ClimateEntity):
                 actions.append([self.async_set_fan_mode, {'fan_mode': self._saved_fan_mode}])
                 self._saved_fan_mode = None
 
-        self._preset = preset_mode
+        self._attr_preset_mode = preset_mode
         try:
             await self._tion_entry.connect()
             for a in actions:
                 await a[0](**a[1])
-            self._preset = preset_mode
+            self._attr_preset_mode = preset_mode
             await self._async_update_state()
         finally:
             await self._tion_entry.disconnect()
@@ -283,7 +278,7 @@ class TionClimateEntity(ClimateEntity):
             _LOGGER.warning(f"I'm in boost mode, but current speed {self.fan_mode} is not equal boost speed "
                             f"{self.boost_fan_mode}. Dropping boost mode")
             self._is_boost = False
-            self._preset = PRESET_NONE
+            self._attr_preset_mode = PRESET_NONE
 
         self.async_write_ha_state()
 
