@@ -97,7 +97,7 @@ class TionClimateEntity(ClimateEntity):
     def hvac_mode(self):
         """Return current operation."""
         if self._tion_entry.data.get("is_on"):
-            if self._tion_entry.data.get("is_heater_on"):
+            if self._tion_entry.data.get("heater"):
                 return HVAC_MODE_HEAT
             else:
                 return HVAC_MODE_FAN_ONLY
