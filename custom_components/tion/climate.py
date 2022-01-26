@@ -51,14 +51,24 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 class TionClimateEntity(ClimateEntity):
     """Representation of a Tion device."""
 
+    _attr_hvac_modes = [HVAC_MODE_HEAT, HVAC_MODE_FAN_ONLY, HVAC_MODE_OFF]
+    _attr_min_temp = 0
+    _attr_max_temp = 30
+    _attr_fan_modes = [1, 2, 3, 4, 5, 6]
+    _attr_precision = PRECISION_WHOLE
+    _attr_target_temperature_step = 1
+    _attr_temperature_unit = TEMP_CELSIUS
+    _attr_should_poll = False
+    _attr_preset_modes = [PRESET_NONE, PRESET_BOOST, PRESET_SLEEP]
+    _attr_supported_features = SUPPORT_FLAGS | SUPPORT_PRESET_MODE
+    _attr_icon = 'mdi:air-purifier'
+
     def __init__(self, hass: HomeAssistant, instance: TionInstance):
         self.hass: HomeAssistant = hass
         self._tion_entry = instance
         self._keep_alive: datetime.timedelta = datetime.timedelta(seconds=self._tion_entry.keep_alive)
 
         self._away_temp = self._tion_entry.away_temp
-        self._support_flags = SUPPORT_FLAGS | SUPPORT_PRESET_MODE
-        self._hvac_list = [HVAC_MODE_HEAT, HVAC_MODE_FAN_ONLY, HVAC_MODE_OFF]
 
         # saved states
         self._last_mode = None
@@ -70,27 +80,13 @@ class TionClimateEntity(ClimateEntity):
         self._is_boost: bool = False
         self._fan_speed = 1
 
+        if self._away_temp:
+            self._attr_preset_modes.append(PRESET_AWAY)
+
         self._preset = PRESET_NONE
-
-    @property
-    def should_poll(self):
-        """Return the polling state."""
-        return False
-
-    @property
-    def temperature_unit(self):
-        """Return the unit of measurement."""
-        return TEMP_CELSIUS
-
-    @property
-    def min_temp(self) -> float:
-        """Minimum temperature that allowed by Tion breezer."""
-        return 0
-
-    @property
-    def max_temp(self) -> float:
-        """Maximum temperature that allowed by Tion breezer."""
-        return 30
+        self._attr_device_info = self._tion_entry.device_info
+        self._attr_name = self._tion_entry.name
+        self._attr_unique_id = self._tion_entry.unique_id
 
     @property
     def hvac_mode(self):
@@ -102,11 +98,6 @@ class TionClimateEntity(ClimateEntity):
                 return HVAC_MODE_FAN_ONLY
         else:
             return HVAC_MODE_OFF
-
-    @property
-    def hvac_modes(self):
-        """List of available operation modes."""
-        return self._hvac_list
 
     @property
     def hvac_action(self):
@@ -126,15 +117,6 @@ class TionClimateEntity(ClimateEntity):
     def preset_mode(self):
         """Return the current preset mode, e.g., home, away, temp."""
         return self._preset
-
-    @property
-    def preset_modes(self):
-        """Return a list of available preset modes or PRESET_NONE if _away_temp is undefined."""
-        modes = [PRESET_NONE, PRESET_BOOST, PRESET_SLEEP]
-        if self._away_temp:
-            modes.append(PRESET_AWAY)
-        return modes
-
 
     async def async_set_hvac_mode(self, hvac_mode):
         """Set hvac mode."""
@@ -166,11 +148,6 @@ class TionClimateEntity(ClimateEntity):
             return
         # Ensure we update the current operation after changing the mode
         self.async_write_ha_state()
-
-    @property
-    def supported_features(self):
-        """Return the list of supported features."""
-        return self._support_flags
 
     async def async_set_preset_mode(self, preset_mode: str):
         """Set new preset mode."""
@@ -232,29 +209,6 @@ class TionClimateEntity(ClimateEntity):
         """Maximum fan speed for sleep mode"""
         return 2
 
-    @property
-    def fan_modes(self):
-        return [1, 2, 3, 4, 5, 6]
-
-    @property
-    def precision(self):
-        """Return the precision of the system."""
-        return PRECISION_WHOLE
-
-    @property
-    def target_temperature_step(self):
-        """Return the supported step of target temperature."""
-        return 1
-
-    @property
-    def unique_id(self):
-        return self._tion_entry.unique_id
-
-    @property
-    def name(self):
-        """Return the name of the sensor."""
-        return self._tion_entry.name
-
     async def async_added_to_hass(self):
         """Run when entity about to be added."""
         await super().async_added_to_hass()
@@ -286,10 +240,6 @@ class TionClimateEntity(ClimateEntity):
         self._target_temp = temperature
         await self._async_set_state(heater_temp=temperature)
         self.async_write_ha_state()
-
-    @property
-    def icon(self):
-        return 'mdi:air-purifier'
 
     async def async_turn_on(self):
         """
@@ -336,10 +286,6 @@ class TionClimateEntity(ClimateEntity):
             self._preset = PRESET_NONE
 
         self.async_write_ha_state()
-
-    @property
-    def device_info(self):
-        return self._tion_entry.device_info
 
     @property
     def extra_state_attributes(self):
