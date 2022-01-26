@@ -27,8 +27,7 @@ async def async_setup(hass, config):
 async def async_setup_entry(hass, config_entry: ConfigEntry):
     _LOGGER.info("Setting up %s ", config_entry.unique_id)
 
-    if DOMAIN not in hass.data:
-        hass.data[DOMAIN] = {}
+    hass.data.setdefault(DOMAIN, {})
 
     hass.data[DOMAIN][config_entry.entry_id] = TionInstance(hass, config_entry)
     hass.config_entries.async_setup_platforms(config_entry, PLATFORMS)
