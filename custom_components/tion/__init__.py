@@ -8,7 +8,7 @@ import math
 
 from bluepy import btle
 from tion_btle.tion import tion
-from .const import DOMAIN, TION_SCHEMA, CONF_KEEP_ALIVE, CONF_AWAY_TEMP, CONF_MAC
+from .const import DOMAIN, TION_SCHEMA, CONF_KEEP_ALIVE, CONF_AWAY_TEMP, CONF_MAC, PLATFORMS
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
@@ -31,6 +31,7 @@ async def async_setup_entry(hass, config_entry: ConfigEntry):
         hass.data[DOMAIN] = {}
 
     hass.data[DOMAIN][config_entry.entry_id] = TionInstance(hass, config_entry)
+    hass.config_entries.async_setup_platforms(config_entry, PLATFORMS)
     return True
 
 
@@ -60,7 +61,6 @@ class TionInstance:
 
         self.__tion: tion = self.getTion(model, self.config[CONF_MAC])
         self.data = {}
-        hass.loop.create_task(self.start_up())
 
     @property
     def config(self) -> dict:
@@ -73,10 +73,6 @@ class TionInstance:
                 if any(self._config_entry.data):
                     config = self._config_entry.data
         return config
-
-    async def start_up(self):
-        await self.hass.config_entries.async_forward_entry_setup(self._config_entry, 'climate')
-        await self.hass.config_entries.async_forward_entry_setup(self._config_entry, 'sensor')
 
     @staticmethod
     def _decode_state(state: str) -> bool:
@@ -137,10 +133,6 @@ class TionInstance:
     @keep_alive.setter
     def keep_alive(self, value: int):
         self.__keep_alive = value
-
-    @property
-    def filter_remain(self) -> int:
-        return self.data.get("filter_remain")
 
     async def set(self, **kwargs):
         if "is_on" in kwargs:
