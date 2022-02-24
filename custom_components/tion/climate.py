@@ -142,6 +142,7 @@ class TionClimateEntity(ClimateEntity):
             _LOGGER.error("Unrecognized hvac mode: %s", hvac_mode)
             return
         # Ensure we update the current operation after changing the mode
+        await self._get_current_state()
         self.async_write_ha_state()
 
     async def async_set_preset_mode(self, preset_mode: str):
@@ -253,22 +254,9 @@ class TionClimateEntity(ClimateEntity):
         _LOGGER.debug(f"Turning off from {self.hvac_mode}")
         await self.async_set_hvac_mode(HVAC_MODE_OFF)
 
-    @property
-    def fan_mode(self):
-        return self._tion_entry.data.get("fan_speed")
-
-    @property
-    def target_temperature(self):
-        """Return the temperature we try to reach."""
-        return self._tion_entry.data.get("heater_temp")
-
-    @property
-    def current_temperature(self):
-        """Return the sensor temperature."""
-        return self._tion_entry.data.get("out_temp")
-
     async def _async_set_state(self, **kwargs):
         await self._tion_entry.set(**kwargs)
+        await self._get_current_state()
         self.async_write_ha_state()
 
     async def _async_update_state(self, time=None, force: bool = False, keep_connection: bool = False) -> None:
@@ -280,6 +268,7 @@ class TionClimateEntity(ClimateEntity):
             self._is_boost = False
             self._attr_preset_mode = PRESET_NONE
 
+        await self._get_current_state()
         self.async_write_ha_state()
 
     @property
@@ -289,3 +278,8 @@ class TionClimateEntity(ClimateEntity):
             'in_temp': self._tion_entry.data.get("in_temp")
         }
         return attributes
+
+    async def _get_current_state(self):
+        self._attr_target_temperature = self._tion_entry.data.get("heater_temp")
+        self._attr_current_temperature = self._tion_entry.data.get("out_temp")
+        self._attr_fan_mode = self._tion_entry.data.get("fan_speed")
