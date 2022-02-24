@@ -1,8 +1,6 @@
 """Adds support for generic thermostat units."""
 import logging
 
-import datetime
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.const import TEMP_CELSIUS
@@ -12,7 +10,7 @@ from homeassistant.components.climate import ClimateEntity
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import TionInstance
 from .const import *
@@ -48,7 +46,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     return True
 
 
-class TionClimateEntity(ClimateEntity):
+class TionClimateEntity(ClimateEntity, CoordinatorEntity):
     """Representation of a Tion device."""
 
     _attr_hvac_modes = [HVAC_MODE_HEAT, HVAC_MODE_FAN_ONLY, HVAC_MODE_OFF]
@@ -58,18 +56,19 @@ class TionClimateEntity(ClimateEntity):
     _attr_precision = PRECISION_WHOLE
     _attr_target_temperature_step = 1
     _attr_temperature_unit = TEMP_CELSIUS
-    _attr_should_poll = False
     _attr_preset_modes = [PRESET_NONE, PRESET_BOOST, PRESET_SLEEP]
     _attr_preset_mode = PRESET_NONE
     _attr_supported_features = SUPPORT_FLAGS | SUPPORT_PRESET_MODE
     _attr_icon = 'mdi:air-purifier'
+    coordinator: TionInstance
 
     def __init__(self, hass: HomeAssistant, instance: TionInstance):
+        CoordinatorEntity.__init__(
+            self=self,
+            coordinator=instance,
+        )
         self.hass: HomeAssistant = hass
-        self._tion_entry = instance
-        self._keep_alive: datetime.timedelta = datetime.timedelta(seconds=self._tion_entry.keep_alive)
-
-        self._away_temp = self._tion_entry.away_temp
+        self._away_temp = self.coordinator.away_temp
 
         # saved states
         self._last_mode = None
@@ -84,15 +83,21 @@ class TionClimateEntity(ClimateEntity):
         if self._away_temp:
             self._attr_preset_modes.append(PRESET_AWAY)
 
-        self._attr_device_info = self._tion_entry.device_info
-        self._attr_name = self._tion_entry.name
-        self._attr_unique_id = self._tion_entry.unique_id
+        self._attr_device_info = self.coordinator.device_info
+        self._attr_name = self.coordinator.name
+        self._attr_unique_id = self.coordinator.unique_id
+
+        self._get_current_state()
+        ClimateEntity.__init__(self)
 
     @property
     def hvac_mode(self):
         """Return current operation."""
-        if self._tion_entry.data.get("is_on"):
-            if self._tion_entry.data.get("heater"):
+        self.coordinator.logger.debug(f"state is {self.coordinator.data.get('is_on')} "
+                                      f"heater is {self.coordinator.data.get('heater')}")
+
+        if self.coordinator.data.get("is_on"):
+            if self.coordinator.data.get("heater"):
                 return HVAC_MODE_HEAT
             else:
                 return HVAC_MODE_FAN_ONLY
@@ -104,8 +109,11 @@ class TionClimateEntity(ClimateEntity):
         """Return the current running hvac operation if supported.
         Need to be one of CURRENT_HVAC_*.
         """
-        if self._tion_entry.data.get("is_on"):
-            if self._tion_entry.data.get("is_heating"):
+
+        self.coordinator.logger.debug(f"state is {self.coordinator.data.get('is_on')} "
+                                      f"heating is {self.coordinator.data.get('is_heating')}")
+        if self.coordinator.data.get("is_on"):
+            if self.coordinator.data.get("is_heating"):
                 current_hvac_operation = CURRENT_HVAC_HEAT
             else:
                 current_hvac_operation = CURRENT_HVAC_FAN
@@ -129,12 +137,12 @@ class TionClimateEntity(ClimateEntity):
         elif hvac_mode == HVAC_MODE_HEAT:
             saved_target_temp = self.target_temperature
             try:
-                await self._tion_entry.connect()
+                await self.coordinator.connect()
                 await self._async_set_state(heater=True, is_on=True)
                 if self.hvac_mode == HVAC_MODE_FAN_ONLY:
                     await self.async_set_temperature(**{ATTR_TEMPERATURE: saved_target_temp})
             finally:
-                await self._tion_entry.disconnect()
+                await self.coordinator.disconnect()
         elif hvac_mode == HVAC_MODE_FAN_ONLY:
             await self._async_set_state(heater=False, is_on=True)
 
@@ -142,7 +150,7 @@ class TionClimateEntity(ClimateEntity):
             _LOGGER.error("Unrecognized hvac mode: %s", hvac_mode)
             return
         # Ensure we update the current operation after changing the mode
-        await self._get_current_state()
+        self._get_current_state()
         self.async_write_ha_state()
 
     async def async_set_preset_mode(self, preset_mode: str):
@@ -184,13 +192,13 @@ class TionClimateEntity(ClimateEntity):
 
         self._attr_preset_mode = preset_mode
         try:
-            await self._tion_entry.connect()
+            await self.coordinator.connect()
             for a in actions:
                 await a[0](**a[1])
             self._attr_preset_mode = preset_mode
-            await self._async_update_state()
+            await self._handle_coordinator_update()
         finally:
-            await self._tion_entry.disconnect()
+            await self.coordinator.disconnect()
 
     @property
     def boost_fan_mode(self) -> int:
@@ -205,14 +213,6 @@ class TionClimateEntity(ClimateEntity):
         """Maximum fan speed for sleep mode"""
         return 2
 
-    async def async_added_to_hass(self):
-        """Run when entity about to be added."""
-        await super().async_added_to_hass()
-
-        if self._keep_alive:
-            async_track_time_interval(self.hass, self._async_update_state, self._keep_alive)
-        await self._async_update_state(force=True)
-
     async def async_set_fan_mode(self, fan_mode):
         if self.preset_mode == PRESET_SLEEP:
             if int(fan_mode) > self.sleep_max_fan_mode:
@@ -223,7 +223,7 @@ class TionClimateEntity(ClimateEntity):
         if (self.preset_mode == PRESET_BOOST and self._is_boost) and fan_mode != self.boost_fan_mode:
             _LOGGER.debug("I'm in boost mode. Will ignore requested fan speed %s" % fan_mode)
             fan_mode = self.boost_fan_mode
-        if fan_mode != self.fan_mode or not self._tion_entry.data.get("is_on"):
+        if fan_mode != self.fan_mode or not self.coordinator.data.get("is_on"):
             self._fan_speed = fan_mode
             await self._async_set_state(fan_speed=fan_mode, is_on=True)
             self.async_write_ha_state()
@@ -255,31 +255,29 @@ class TionClimateEntity(ClimateEntity):
         await self.async_set_hvac_mode(HVAC_MODE_OFF)
 
     async def _async_set_state(self, **kwargs):
-        await self._tion_entry.set(**kwargs)
-        await self._get_current_state()
+        await self.coordinator.set(**kwargs)
+        self._get_current_state()
         self.async_write_ha_state()
 
-    async def _async_update_state(self, time=None, force: bool = False, keep_connection: bool = False) -> None:
-        """called every self._keep_alive"""
-        await self._tion_entry.async_update_state(time, force, keep_connection)
+    async def _handle_coordinator_update(self) -> None:
+        self._get_current_state()
         if self.fan_mode != self.boost_fan_mode and (self._is_boost or self.preset_mode == PRESET_BOOST):
             _LOGGER.warning(f"I'm in boost mode, but current speed {self.fan_mode} is not equal boost speed "
                             f"{self.boost_fan_mode}. Dropping boost mode")
             self._is_boost = False
             self._attr_preset_mode = PRESET_NONE
 
-        await self._get_current_state()
         self.async_write_ha_state()
 
     @property
     def extra_state_attributes(self):
         attributes = {
-            'air_mode': self._tion_entry.data.get("air_mode"),
-            'in_temp': self._tion_entry.data.get("in_temp")
+            'air_mode': self.coordinator.data.get("air_mode"),
+            'in_temp': self.coordinator.data.get("in_temp")
         }
         return attributes
 
-    async def _get_current_state(self):
-        self._attr_target_temperature = self._tion_entry.data.get("heater_temp")
-        self._attr_current_temperature = self._tion_entry.data.get("out_temp")
-        self._attr_fan_mode = self._tion_entry.data.get("fan_speed")
+    def _get_current_state(self):
+        self._attr_target_temperature = self.coordinator.data.get("heater_temp")
+        self._attr_current_temperature = self.coordinator.data.get("out_temp")
+        self._attr_fan_mode = self.coordinator.data.get("fan_speed")

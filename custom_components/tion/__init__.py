@@ -2,13 +2,15 @@
 from __future__ import annotations
 
 import asyncio
+import datetime
 from concurrent.futures import ThreadPoolExecutor
 import logging
 import math
+from datetime import timedelta
 from functools import cached_property
 
-from bluepy import btle
-from tion_btle.tion import tion
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from tion_btle.tion import tion, MaxTriesExceededError
 from .const import DOMAIN, TION_SCHEMA, CONF_KEEP_ALIVE, CONF_AWAY_TEMP, CONF_MAC, PLATFORMS
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -31,13 +33,14 @@ async def async_setup_entry(hass, config_entry: ConfigEntry):
     hass.data.setdefault(DOMAIN, {})
 
     hass.data[DOMAIN][config_entry.unique_id] = TionInstance(hass, config_entry)
+    await hass.data[DOMAIN][config_entry.unique_id].async_config_entry_first_refresh()
     hass.config_entries.async_setup_platforms(config_entry, PLATFORMS)
     return True
 
 
-class TionInstance:
+class TionInstance(DataUpdateCoordinator):
     def __init__(self, hass: HomeAssistant, config_entry: ConfigEntry):
-        self.hass: HomeAssistant = hass
+
         self._config_entry: ConfigEntry = config_entry
 
         self.__keep_alive: int = 60
@@ -58,7 +61,17 @@ class TionInstance:
             model = 'S3'
 
         self.__tion: tion = self.getTion(model, self.config[CONF_MAC])
-        self.data = {}
+        self.__keep_alive = datetime.timedelta(seconds=self.__keep_alive)
+        self._next_update = datetime.timedelta(seconds=self._next_update)
+        self._delay = datetime.timedelta(seconds=self._delay)
+
+        super().__init__(
+            name=self.config['name'] if 'name' in self.config else TION_SCHEMA['name']['default'],
+            hass=hass,
+            logger=_LOGGER,
+            update_interval=self.__keep_alive,
+            update_method=self.async_update_state,
+        )
 
     @property
     def config(self) -> dict:
@@ -76,56 +89,36 @@ class TionInstance:
     def _decode_state(state: str) -> bool:
         return True if state == "on" else False
 
-    async def async_update_state(self, time=None, force: bool = False, keep_connection: bool = False):
-        _LOGGER.debug("Tion instance updated at %s" % time)
-        _LOGGER.debug("Update fired force = " + str(force) + ". Keep connection is " + str(keep_connection))
-        if time:
-            _LOGGER.debug("Now is %s", time)
-            now = int(time.timestamp())
-        else:
-            now = 0
+    async def async_update_state(self):
+        self.logger.info("Tion instance update started")
         response: dict[str, str | bool | int] = {}
-        if self._next_update <= now or force:
-            try:
-                response = await btle_exec_helper(self.__tion.get, keep_connection)
-                self._next_update = 0
 
-            except btle.BTLEDisconnectError as e:
-                _LOGGER.critical("Got exception %s", str(e))
-                _LOGGER.critical("Will delay next check")
-                self._next_update = now + self._delay
-            except Exception as e:
-                _LOGGER.critical('Response is %s' % response)
-                raise e
+        try:
+            response = await btle_exec_helper(self.__tion.get)
+            self.update_interval = self.__keep_alive
+
+        except MaxTriesExceededError as e:
+            _LOGGER.critical("Got exception %s", str(e))
+            _LOGGER.critical("Will delay next check")
+            self.update_interval = self._delay
+            raise UpdateFailed("MaxTriesExceededError")
+        except Exception as e:
+            _LOGGER.critical('Response is %s' % response)
+            raise e
 
         response["is_on"]: bool = self._decode_state(response["state"])
         response["heater"]: bool = self._decode_state(response["heater"])
         response["is_heating"] = self._decode_state(response["heating"])
         response["filter_remain"] = math.ceil(response["filter_remain"])
         response["fan_speed"] = int(response["fan_speed"])
-        # Coordinator will do it for use in future
-        self.data = response
 
-        return True
+        self.logger.debug(f"Result is {response}")
+        return response
 
     @property
     def away_temp(self) -> int:
         """Temperature for away mode"""
         return self.config[CONF_AWAY_TEMP] if CONF_AWAY_TEMP in self.config else TION_SCHEMA[CONF_AWAY_TEMP]['default']
-
-    @property
-    def name(self) -> str:
-        """Instance name"""
-        return self.config['name'] if 'name' in self.config else TION_SCHEMA['name']['default']
-
-    @property
-    def keep_alive(self) -> int:
-        """Update interval"""
-        return self.__keep_alive
-
-    @keep_alive.setter
-    def keep_alive(self, value: int):
-        self.__keep_alive = value
 
     async def set(self, **kwargs):
         if "is_on" in kwargs:

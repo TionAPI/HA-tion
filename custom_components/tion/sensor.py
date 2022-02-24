@@ -8,6 +8,7 @@ from homeassistant.components.sensor import SensorEntityDescription, SensorDevic
 from homeassistant.const import TEMP_CELSIUS
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import TionInstance
 from .const import DOMAIN
@@ -57,14 +58,17 @@ async def async_setup_entry(hass: HomeAssistant, config: ConfigEntry, async_add_
     return True
 
 
-class TionSensor(SensorEntity):
+class TionSensor(SensorEntity, CoordinatorEntity):
     """Representation of a sensor."""
 
     def __init__(self, description: SensorEntityDescription, instance: TionInstance):
         """Initialize the sensor."""
 
+        CoordinatorEntity.__init__(
+            self=self,
+            coordinator=instance,
+        )
         self.entity_description = description
-        self._tion_instance: TionInstance = instance
         self._attr_name = f"{instance.name} {description.name}"
         self._attr_device_info = instance.device_info
         self._attr_unique_id = f"{instance.unique_id}-{description.key}"
@@ -74,4 +78,4 @@ class TionSensor(SensorEntity):
     @property
     def native_value(self):
         """Return the state of the sensor."""
-        return self._tion_instance.data.get(self.entity_description.key)
+        return self.coordinator.data.get(self.entity_description.key)
