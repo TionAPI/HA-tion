@@ -79,3 +79,12 @@ class TionSensor(SensorEntity, CoordinatorEntity):
     def native_value(self):
         """Return the state of the sensor."""
         return self.coordinator.data.get(self.entity_description.key)
+
+    async def _handle_coordinator_update(self) -> None:
+        self._attr_assumed_state = False if self.coordinator.last_update_success else True
+        self.async_write_ha_state()
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        return True

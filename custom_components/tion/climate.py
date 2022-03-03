@@ -281,3 +281,9 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
         self._attr_target_temperature = self.coordinator.data.get("heater_temp")
         self._attr_current_temperature = self.coordinator.data.get("out_temp")
         self._attr_fan_mode = self.coordinator.data.get("fan_speed")
+        self._attr_assumed_state = False if self.coordinator.last_update_success else True
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        return True
