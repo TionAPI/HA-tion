@@ -199,6 +199,8 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
         finally:
             await self.coordinator.disconnect()
 
+        await self._handle_coordinator_update()
+
     @property
     def boost_fan_mode(self) -> int:
         """Fan speed for boost mode
