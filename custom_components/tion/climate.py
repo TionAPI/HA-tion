@@ -150,8 +150,7 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
             _LOGGER.error("Unrecognized hvac mode: %s", hvac_mode)
             return
         # Ensure we update the current operation after changing the mode
-        self._get_current_state()
-        self.async_write_ha_state()
+        await self._handle_coordinator_update()
 
     async def async_set_preset_mode(self, preset_mode: str):
         """Set new preset mode."""
@@ -254,8 +253,7 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
 
     async def _async_set_state(self, **kwargs):
         await self.coordinator.set(**kwargs)
-        self._get_current_state()
-        self.async_write_ha_state()
+        await self._handle_coordinator_update()
 
     async def _handle_coordinator_update(self) -> None:
         self._get_current_state()
