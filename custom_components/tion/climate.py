@@ -90,22 +90,6 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
         self._get_current_state()
         ClimateEntity.__init__(self)
 
-    @property
-    def hvac_action(self):
-        """Return the current running hvac operation if supported.
-        Need to be one of CURRENT_HVAC_*.
-        """
-
-        self.coordinator.logger.debug(f"state is {self.coordinator.data.get('is_on')} "
-                                      f"heating is {self.coordinator.data.get('is_heating')}")
-        if self.coordinator.data.get("is_on"):
-            if self.coordinator.data.get("is_heating"):
-                current_hvac_operation = CURRENT_HVAC_HEAT
-            else:
-                current_hvac_operation = CURRENT_HVAC_FAN
-        else:
-            current_hvac_operation = CURRENT_HVAC_OFF
-        return current_hvac_operation
 
     async def async_set_hvac_mode(self, hvac_mode):
         """Set hvac mode."""
@@ -264,6 +248,8 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
         }
         self._attr_hvac_mode = HVAC_MODE_OFF if not self.coordinator.data.get("is_on") else \
             HVAC_MODE_HEAT if self.coordinator.data.get("heater") else HVAC_MODE_FAN_ONLY
+        self._attr_hvac_action = CURRENT_HVAC_OFF if not self.coordinator.data.get("is_on") else \
+            CURRENT_HVAC_HEAT if self.coordinator.data.get("is_heating") else CURRENT_HVAC_FAN
 
     @property
     def available(self) -> bool:
