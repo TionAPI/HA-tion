@@ -226,7 +226,6 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
         if fan_mode != self.fan_mode or not self.coordinator.data.get("is_on"):
             self._fan_speed = fan_mode
             await self._async_set_state(fan_speed=fan_mode, is_on=True)
-            self.async_write_ha_state()
 
     async def async_set_temperature(self, **kwargs):
         """Set new target temperature."""
@@ -235,7 +234,6 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
             return
         self._target_temp = temperature
         await self._async_set_state(heater_temp=temperature)
-        self.async_write_ha_state()
 
     async def async_turn_on(self):
         """
