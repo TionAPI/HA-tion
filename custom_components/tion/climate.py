@@ -269,19 +269,15 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
 
         self.async_write_ha_state()
 
-    @property
-    def extra_state_attributes(self):
-        attributes = {
-            'air_mode': self.coordinator.data.get("air_mode"),
-            'in_temp': self.coordinator.data.get("in_temp")
-        }
-        return attributes
-
     def _get_current_state(self):
         self._attr_target_temperature = self.coordinator.data.get("heater_temp")
         self._attr_current_temperature = self.coordinator.data.get("out_temp")
         self._attr_fan_mode = self.coordinator.data.get("fan_speed")
         self._attr_assumed_state = False if self.coordinator.last_update_success else True
+        self._attr_extra_state_attributes = {
+            'air_mode': self.coordinator.data.get("air_mode"),
+            'in_temp': self.coordinator.data.get("in_temp")
+        }
 
     @property
     def available(self) -> bool:
