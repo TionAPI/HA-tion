@@ -90,7 +90,6 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
         self._get_current_state()
         ClimateEntity.__init__(self)
 
-
     async def async_set_hvac_mode(self, hvac_mode):
         """Set hvac mode."""
         _LOGGER.info("Need to set mode to %s, current mode is %s", hvac_mode, self.hvac_mode)
