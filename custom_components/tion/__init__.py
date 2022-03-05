@@ -161,3 +161,11 @@ class TionInstance(DataUpdateCoordinator):
     @cached_property
     def unique_id(self):
         return self.__tion.mac
+
+    @cached_property
+    def supported_air_sources(self) -> list[str]:
+        if self.config["model"] == "S3":
+            return ["outside", "mixed", "recirculation"]
+        else:
+            return ["outside", "recirculation"]
+

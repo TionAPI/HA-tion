@@ -8,9 +8,10 @@ import voluptuous as vol
 
 from homeassistant.components.climate import ClimateEntity
 
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
 
 from . import TionInstance
 from .const import *
@@ -43,6 +44,16 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         async_add_entities([TionClimateEntity(hass, tion_instance)])
     else:
         _LOGGER.warning(f"Device {unique_id} is already configured! ")
+
+    platform = entity_platform.async_get_current_platform()
+    platform.async_register_entity_service(
+        "set_air_source",
+        {
+            vol.Required("source"): vol.In(tion_instance.supported_air_sources),
+        },
+        "set_air_source",
+    )
+
     return True
 
 
@@ -254,3 +265,7 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
     def available(self) -> bool:
         """Return if entity is available."""
         return True
+
+    async def set_air_source(self, source: str):
+        _LOGGER.debug(f"set_air_source: {source}")
+        await self.coordinator.set(mode=source)

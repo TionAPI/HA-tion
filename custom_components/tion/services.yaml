@@ -1,0 +1,18 @@
+set_air_source:
+  name: Air source
+  description: Set air source
+  target:
+    device:
+      integration: tion
+  fields:
+    source:
+      name: Air source
+      description: "Where breezer should get air. Not all variants may be supported by breezer"
+      example: recirculation
+      required: true
+      selector:
+        select:
+          options:
+            - "outside"
+            - "recirculation"
+            - "mixed"
