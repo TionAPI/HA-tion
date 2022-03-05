@@ -8,6 +8,7 @@ from homeassistant.components.sensor import SensorEntityDescription, SensorDevic
 from homeassistant.const import TEMP_CELSIUS
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import TionInstance
@@ -40,6 +41,13 @@ SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
         entity_registry_enabled_default=True,
         entity_category="diagnostic",
     ),
+    SensorEntityDescription(
+            key="mode",
+            name="Air mode",
+            icon="mdi:air-filter",
+            entity_registry_enabled_default=True,
+            entity_category=EntityCategory.CONFIG,
+        ),
 )
 
 

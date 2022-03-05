@@ -5,5 +5,5 @@
   "domains": ["climate"],
   "zip_release": true,
   "filename": "tion.zip",
-  "homeassistant":  "2021.12.0"
+  "homeassistant":  "2022.3.0"
 }
