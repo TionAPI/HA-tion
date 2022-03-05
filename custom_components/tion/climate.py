@@ -130,7 +130,7 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
             _LOGGER.error("Unrecognized hvac mode: %s", hvac_mode)
             return
         # Ensure we update the current operation after changing the mode
-        await self._handle_coordinator_update()
+        self._handle_coordinator_update()
 
     async def async_set_preset_mode(self, preset_mode: str):
         """Set new preset mode."""
@@ -175,11 +175,11 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
             for a in actions:
                 await a[0](**a[1])
             self._attr_preset_mode = preset_mode
-            await self._handle_coordinator_update()
+            self._handle_coordinator_update()
         finally:
             await self.coordinator.disconnect()
 
-        await self._handle_coordinator_update()
+        self._handle_coordinator_update()
 
     @property
     def boost_fan_mode(self) -> int:
@@ -235,9 +235,9 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
 
     async def _async_set_state(self, **kwargs):
         await self.coordinator.set(**kwargs)
-        await self._handle_coordinator_update()
+        self._handle_coordinator_update()
 
-    async def _handle_coordinator_update(self) -> None:
+    def _handle_coordinator_update(self) -> None:
         self._get_current_state()
         if self.fan_mode != self.boost_fan_mode and (self._is_boost or self.preset_mode == PRESET_BOOST):
             _LOGGER.warning(f"I'm in boost mode, but current speed {self.fan_mode} is not equal boost speed "
