@@ -41,13 +41,6 @@ SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
         entity_registry_enabled_default=True,
         entity_category="diagnostic",
     ),
-    SensorEntityDescription(
-            key="mode",
-            name="Air mode",
-            icon="mdi:air-filter",
-            entity_registry_enabled_default=True,
-            entity_category=EntityCategory.CONFIG,
-        ),
 )
 
 
