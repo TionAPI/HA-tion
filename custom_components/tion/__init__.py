@@ -119,6 +119,7 @@ class TionInstance(DataUpdateCoordinator):
         return self.config[CONF_AWAY_TEMP] if CONF_AWAY_TEMP in self.config else TION_SCHEMA[CONF_AWAY_TEMP]['default']
 
     async def set(self, **kwargs):
+        original_args = kwargs.copy()
         if "is_on" in kwargs:
             kwargs["state"] = "on" if kwargs["is_on"] else "off"
             del kwargs["is_on"]
@@ -130,7 +131,7 @@ class TionInstance(DataUpdateCoordinator):
         args = ', '.join('%s=%r' % x for x in kwargs.items())
         _LOGGER.info("Need to set: " + args)
         await btle_exec_helper(self.__tion.set, kwargs)
-        self.data.update(kwargs)
+        self.data.update(original_args)
 
     @staticmethod
     def getTion(model: str, mac: str) -> tion:
