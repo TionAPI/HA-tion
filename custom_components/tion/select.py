@@ -36,7 +36,7 @@ class TionInputSelect(SelectEntity, CoordinatorEntity):
 
     async def async_select_option(self, option: str) -> None:
         await self.coordinator.set(mode=option)
-        self.async_write_ha_state()
+        self._handle_coordinator_update()
 
     def __init__(self, description: SelectEntityDescription, instance: TionInstance, hass: HomeAssistant):
         CoordinatorEntity.__init__(self=self, coordinator=instance, )
