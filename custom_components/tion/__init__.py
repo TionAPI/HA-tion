@@ -119,14 +119,15 @@ class TionInstance(DataUpdateCoordinator):
         return self.config[CONF_AWAY_TEMP] if CONF_AWAY_TEMP in self.config else TION_SCHEMA[CONF_AWAY_TEMP]['default']
 
     async def set(self, **kwargs):
+        if "fan_speed" in kwargs:
+            kwargs["fan_speed"] = int(kwargs["fan_speed"])
+
         original_args = kwargs.copy()
         if "is_on" in kwargs:
             kwargs["state"] = "on" if kwargs["is_on"] else "off"
             del kwargs["is_on"]
         if "heater" in kwargs:
             kwargs["heater"] = "on" if kwargs["heater"] else "off"
-        if "fan_speed" in kwargs:
-            kwargs["fan_speed"] = int(kwargs["fan_speed"])
 
         args = ', '.join('%s=%r' % x for x in kwargs.items())
         _LOGGER.info("Need to set: " + args)
