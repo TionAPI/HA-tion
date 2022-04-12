@@ -39,7 +39,7 @@ SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
         key="filter_remain",
         name="filters remain",
         entity_registry_enabled_default=True,
-        entity_category="diagnostic",
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )
 
