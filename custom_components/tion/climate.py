@@ -1,4 +1,6 @@
 """Adds support for generic thermostat units."""
+from __future__ import annotations
+
 import logging
 
 from homeassistant.config_entries import ConfigEntry
@@ -71,6 +73,7 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
     _attr_preset_mode = PRESET_NONE
     _attr_supported_features = SUPPORT_FLAGS | SUPPORT_PRESET_MODE
     _attr_icon = 'mdi:air-purifier'
+    _attr_fan_mode: int
     coordinator: TionInstance
 
     def __init__(self, hass: HomeAssistant, instance: TionInstance):
@@ -269,3 +272,7 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
     async def set_air_source(self, source: str):
         _LOGGER.debug(f"set_air_source: {source}")
         await self.coordinator.set(mode=source)
+
+    @property
+    def fan_mode(self) -> str | None:
+        return str(self._attr_fan_mode)
