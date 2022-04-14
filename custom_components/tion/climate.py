@@ -276,3 +276,7 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
     @property
     def fan_mode(self) -> str | None:
         return str(self._attr_fan_mode)
+
+    @property
+    def fan_modes(self) -> list[str] | None:
+        return [str(i) for i in self._attr_fan_modes]
