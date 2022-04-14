@@ -71,7 +71,7 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
     _attr_temperature_unit = TEMP_CELSIUS
     _attr_preset_modes = [PRESET_NONE, PRESET_BOOST, PRESET_SLEEP]
     _attr_preset_mode = PRESET_NONE
-    _attr_supported_features = SUPPORT_FLAGS | SUPPORT_PRESET_MODE
+    _attr_supported_features = SUPPORT_FLAGS | SUPPORT_PRESET_MODE | SUPPORT_FAN_MODE
     _attr_icon = 'mdi:air-purifier'
     _attr_fan_mode: int
     coordinator: TionInstance
