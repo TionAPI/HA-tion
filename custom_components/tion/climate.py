@@ -242,7 +242,7 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
 
     def _handle_coordinator_update(self) -> None:
         self._get_current_state()
-        if self.fan_mode != self.boost_fan_mode and (self._is_boost or self.preset_mode == PRESET_BOOST):
+        if int(self.fan_mode) != self.boost_fan_mode and (self._is_boost or self.preset_mode == PRESET_BOOST):
             _LOGGER.warning(f"I'm in boost mode, but current speed {self.fan_mode} is not equal boost speed "
                             f"{self.boost_fan_mode}. Dropping boost mode")
             self._is_boost = False
