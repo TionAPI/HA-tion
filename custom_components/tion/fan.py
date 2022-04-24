@@ -75,7 +75,7 @@ class TionFan(FanEntity, CoordinatorEntity):
         self._attr_name = f"{instance.name} {description.name}"
         self._attr_device_info = instance.device_info
         self._attr_unique_id = f"{instance.unique_id}-{description.key}"
-        self._saved_fan_mode = 0
+        self._saved_fan_mode = None
 
         _LOGGER.debug(f"Init of fan  {self.name} ({instance.unique_id})")
 
