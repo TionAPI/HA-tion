@@ -96,7 +96,7 @@ class TionFan(FanEntity, CoordinatorEntity):
 
     async def async_set_percentage(self, percentage: int) -> None:
         """Set the speed of the fan, as a percentage."""
-        await self.coordinator.set(fan_speed=self.percent2mode(percentage))
+        await self.coordinator.set(fan_speed=self.percent2mode(percentage), is_on=percentage > 0)
 
     @cached_property
     def boost_fan_mode(self) -> int:
