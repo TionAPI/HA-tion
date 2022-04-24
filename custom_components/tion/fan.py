@@ -80,14 +80,16 @@ class TionFan(FanEntity, CoordinatorEntity):
         _LOGGER.debug(f"Init of fan  {self.name} ({instance.unique_id})")
 
     def percent2mode(self, percentage: int) -> int:
-        fan_modes_count = len(TionClimateEntity.attr_fan_modes())
-        return 0 if percentage == 0 else \
-            1 if percentage < 100 / self.percentage_step else \
-            2 if percentage < 100 / self.percentage_step * 2 else \
-            3 if percentage < 100 / self.percentage_step * 3 else \
-            4 if percentage < 100 / self.percentage_step * 4 else \
-            5 if percentage < 100 / self.percentage_step * 5 else \
-            6
+        result = 0
+        for i in range(len(TionClimateEntity.attr_fan_modes())):
+            if percentage < self.percentage_step * i:
+                break
+            else:
+                result = i
+        else:
+            result = 6
+
+        return result
 
     def mode2percent(self) -> int | None:
         return int(self.percentage_step * self.fan_mode) if self.fan_mode is not None else None
