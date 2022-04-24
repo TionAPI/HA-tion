@@ -132,5 +132,5 @@ class TionFan(FanEntity, CoordinatorEntity):
     def _handle_coordinator_update(self) -> None:
         self._attr_assumed_state = False if self.coordinator.last_update_success else True
         self._attr_is_on = self.coordinator.data.get("is_on")
-        self._attr_percentage = self.mode2percent()
+        self._attr_percentage = self.mode2percent() if self.is_on else 0
         self.async_write_ha_state()
