@@ -121,10 +121,11 @@ class TionFan(FanEntity, CoordinatorEntity):
 
     async def async_turn_on(self, percentage: int | None = None, preset_mode: str | None = None, **kwargs, ) -> None:
         target_speed = 2 if self._saved_fan_mode is None else self._saved_fan_mode
-        await self.coordinator.set(fan_speed=target_speed)
+        self._saved_fan_mode = None
+        await self.coordinator.set(fan_speed=target_speed, is_on=True)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        if self._saved_fan_mode is None:
+        if self._saved_fan_mode is None and self.fan_mode > 0:
             self._saved_fan_mode = self.fan_mode
 
         await self.coordinator.set(is_on=False)
