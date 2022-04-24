@@ -137,6 +137,7 @@ class TionInstance(DataUpdateCoordinator):
         _LOGGER.info("Need to set: " + args)
         await btle_exec_helper(self.__tion.set, kwargs)
         self.data.update(original_args)
+        self.async_set_updated_data()
 
     @staticmethod
     def getTion(model: str, mac: str) -> tion:
