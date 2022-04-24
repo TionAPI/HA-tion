@@ -26,6 +26,7 @@ SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         entity_registry_enabled_default=True,
+        icon="mdi:import",
     ),
     SensorEntityDescription(
         key="out_temp",
@@ -34,6 +35,7 @@ SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         entity_registry_enabled_default=True,
+        icon="mdi:export",
     ),
     SensorEntityDescription(
         key="filter_remain",
