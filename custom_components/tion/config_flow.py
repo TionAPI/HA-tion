@@ -96,7 +96,6 @@ class TionFlow:
         return Tion(mac)
 
 
-@config_entries.HANDLERS.register(DOMAIN)
 class TionConfigFlow(TionFlow, config_entries.ConfigFlow, domain=DOMAIN):
     """Initial setup."""
     VERSION = 1
