@@ -153,6 +153,7 @@ class TionFlow:
 
 @config_entries.HANDLERS.register(DOMAIN)
 class TionConfigFlow(TionFlow, config_entries.ConfigFlow, domain=DOMAIN):
+    """Initial setup."""
     VERSION = 1
     CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
 
@@ -166,6 +167,7 @@ class TionConfigFlow(TionFlow, config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class TionOptionsFlowHandler(TionFlow, config_entries.OptionsFlow):
+    """Change options dialog."""
 
     def __init__(self, config_entry):
         """Initialize Shelly options flow."""
