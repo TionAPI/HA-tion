@@ -109,6 +109,9 @@ class TionConfigFlow(TionFlow, config_entries.ConfigFlow, domain=DOMAIN):
     def async_get_options_flow(config_entry):
         return TionOptionsFlowHandler(config_entry)
 
+    def _create_entry(self, data, title):
+        return self.async_create_entry(title=title, data=data)
+
     async def async_step_user(self, input=None):
         """user initiates a flow via the user interface."""
 
@@ -128,7 +131,7 @@ class TionConfigFlow(TionFlow, config_entries.ConfigFlow, domain=DOMAIN):
                     _LOGGER.error("Could not get data from breezer. result is %s, error: %s" % (result, str(e)))
                     return self.async_show_form(step_id='add_failed')
 
-                return self.async_create_entry(title=input['name'], data=input)
+                return self._create_entry(title=input['name'], data=input)
 
         return self.async_show_form(step_id="user", data_schema=self.get_schema(TION_SCHEMA))
 
@@ -150,7 +153,7 @@ class TionConfigFlow(TionFlow, config_entries.ConfigFlow, domain=DOMAIN):
                           type(e).__name__, str(e))
             return self.async_show_form(step_id='pair_failed')
 
-        return self.async_create_entry(title=self._data['name'], data=self._data)
+        return self._create_entry(title=self._data['name'], data=self._data)
 
     async def async_step_add_failed(self, input):
         _LOGGER.debug("Add failed. Returning to first step")
