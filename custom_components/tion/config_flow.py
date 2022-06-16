@@ -10,9 +10,14 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import callback
 from tion_btle.tion import tion
 
-from .const import DOMAIN, TION_SCHEMA
+from .const import DOMAIN, TION_SCHEMA, CONF_MAC
 
 _LOGGER = logging.getLogger(__name__)
+
+TION_OPTIONS_SCHEMA = TION_SCHEMA.copy()
+del TION_OPTIONS_SCHEMA["pair"]
+del TION_OPTIONS_SCHEMA[CONF_MAC]
+del TION_OPTIONS_SCHEMA["model"]
 
 
 class TionFlow:
@@ -184,4 +189,4 @@ class TionOptionsFlowHandler(TionConfigFlow, config_entries.OptionsFlow):
         if input is not None:
             return await self._create_entry(title="", data=input, step="options")
         else:
-            return self.async_show_form(step_id="init", data_schema=self.get_schema(TION_SCHEMA))
+            return self.async_show_form(step_id="init", data_schema=self.get_schema(TION_OPTIONS_SCHEMA))

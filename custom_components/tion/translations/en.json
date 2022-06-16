@@ -32,12 +32,9 @@
       "init": {
         "title": "Configuration for Tion breezer",
         "data": {
-          "model": "Device model",
-          "mac": "Device MAC address",
           "name": "Name for device",
           "away_temp": "Temperature (celsius) for AWAY mode",
-          "keep_alive": "Interval for querying breezer",
-          "pair": "Need device pairing?"
+          "keep_alive": "Interval for querying breezer"
         }
       }
     }
