@@ -1,21 +1,16 @@
 """Adds config flow for Tion custom component."""
-import asyncio
-import os
 import logging
 import datetime
 import time
 
 import voluptuous as vol
 
-from homeassistant import data_entry_flow
-
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.util.json import load_json
 from homeassistant.core import callback
 from tion_btle.tion import tion
 
-from .const import DOMAIN, TION_SCHEMA, CONF_KEEP_ALIVE
+from .const import DOMAIN, TION_SCHEMA
 
 _LOGGER = logging.getLogger(__name__)
 
