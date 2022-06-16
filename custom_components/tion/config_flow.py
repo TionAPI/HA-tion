@@ -66,6 +66,46 @@ class TionFlow:
                 options.update(self.__add_value_from_saved_settings(self._data, k))
             self._schema = self._schema.extend({type(k, **options): TION_SCHEMA[k]['type']})
 
+    @property
+    def config(self) -> dict:
+        config = {}
+        if hasattr(self._config_entry, 'options'):
+            if any(self._config_entry.options):
+                config = self._config_entry.options
+        if not any(config):
+            if hasattr(self._config_entry, 'data'):
+                if any(self._config_entry.data):
+                    config = self._config_entry.data
+
+        return config
+
+    @staticmethod
+    def getTion(model: str, mac: str) -> tion:
+        if model == 'S3':
+            from tion_btle.s3 import S3 as Tion
+        elif model == 'S4':
+            from tion_btle.s4 import S4 as Tion
+        elif model == 'Lite':
+            from tion_btle.lite import Lite as Tion
+        else:
+            raise NotImplementedError("Model '%s' is not supported!" % model)
+        return Tion(mac)
+
+
+@config_entries.HANDLERS.register(DOMAIN)
+class TionConfigFlow(TionFlow, config_entries.ConfigFlow, domain=DOMAIN):
+    """Initial setup."""
+    VERSION = 1
+    CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
+
+    def __init__(self):
+        super().__init__()
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry):
+        return TionOptionsFlowHandler(config_entry)
+
     async def async_step_user(self, input=None):
         """user initiates a flow via the user interface."""
 
@@ -120,48 +160,8 @@ class TionFlow:
         self._retry = True
         return await self.async_step_user(None)
 
-    @property
-    def config(self) -> dict:
-        config = {}
-        if hasattr(self._config_entry, 'options'):
-            if any(self._config_entry.options):
-                config = self._config_entry.options
-        if not any(config):
-            if hasattr(self._config_entry, 'data'):
-                if any(self._config_entry.data):
-                    config = self._config_entry.data
 
-        return config
-
-    @staticmethod
-    def getTion(model: str, mac: str) -> tion:
-        if model == 'S3':
-            from tion_btle.s3 import S3 as Tion
-        elif model == 'S4':
-            from tion_btle.s4 import S4 as Tion
-        elif model == 'Lite':
-            from tion_btle.lite import Lite as Tion
-        else:
-            raise NotImplementedError("Model '%s' is not supported!" % model)
-        return Tion(mac)
-
-
-@config_entries.HANDLERS.register(DOMAIN)
-class TionConfigFlow(TionFlow, config_entries.ConfigFlow, domain=DOMAIN):
-    """Initial setup."""
-    VERSION = 1
-    CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
-
-    def __init__(self):
-        super().__init__()
-
-    @staticmethod
-    @callback
-    def async_get_options_flow(config_entry):
-        return TionOptionsFlowHandler(config_entry)
-
-
-class TionOptionsFlowHandler(TionFlow, config_entries.OptionsFlow):
+class TionOptionsFlowHandler(TionConfigFlow, config_entries.OptionsFlow):
     """Change options dialog."""
 
     def __init__(self, config_entry):
