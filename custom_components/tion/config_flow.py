@@ -17,7 +17,6 @@ _LOGGER = logging.getLogger(__name__)
 
 class TionFlow:
     def __init__(self):
-        self._schema = vol.Schema({})
         self._data: dict = {}
         self._config_entry: ConfigEntry = {}
         self._retry: bool = False
@@ -55,16 +54,20 @@ class TionFlow:
 
         return result
 
-    def _build_schema(self) -> None:
+    def get_schema(self, schema_description: dict = None) -> vol.Schema:
+        schema = vol.Schema({})
+        if schema_description is None:
+            schema_description = {}
 
-        for k in TION_SCHEMA.keys():
+        for k in schema_description.keys():
             type = vol.Required if TION_SCHEMA[k]['required'] else vol.Optional
             options = {}
             options.update(self.__add_default_value(self.config, k))
             options.update(self.__add_value_from_saved_settings(self.config, k))
             if self._retry:
                 options.update(self.__add_value_from_saved_settings(self._data, k))
-            self._schema = self._schema.extend({type(k, **options): TION_SCHEMA[k]['type']})
+            schema = schema.extend({type(k, **options): TION_SCHEMA[k]['type']})
+        return schema
 
     @property
     def config(self) -> dict:
@@ -127,8 +130,7 @@ class TionConfigFlow(TionFlow, config_entries.ConfigFlow, domain=DOMAIN):
 
                 return self.async_create_entry(title=input['name'], data=input)
 
-        self._build_schema()
-        return self.async_show_form(step_id="user", data_schema=self._schema)
+        return self.async_show_form(step_id="user", data_schema=self.get_schema(TION_SCHEMA))
 
     async def async_step_pair(self, input):
         """Pair host and breezer"""
