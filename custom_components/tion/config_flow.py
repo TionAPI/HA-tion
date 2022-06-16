@@ -109,7 +109,10 @@ class TionConfigFlow(TionFlow, config_entries.ConfigFlow, domain=DOMAIN):
     def async_get_options_flow(config_entry):
         return TionOptionsFlowHandler(config_entry)
 
-    def _create_entry(self, data, title):
+    async def _create_entry(self, data, title, step: str):
+        if step in ["user", "pair"]:
+            await self.async_set_unique_id(data["mac"])
+            self._abort_if_unique_id_configured()
         return self.async_create_entry(title=title, data=data)
 
     async def async_step_user(self, input=None):
@@ -131,7 +134,7 @@ class TionConfigFlow(TionFlow, config_entries.ConfigFlow, domain=DOMAIN):
                     _LOGGER.error("Could not get data from breezer. result is %s, error: %s" % (result, str(e)))
                     return self.async_show_form(step_id='add_failed')
 
-                return self._create_entry(title=input['name'], data=input)
+                return await self._create_entry(title=input['name'], data=input, step="user")
 
         return self.async_show_form(step_id="user", data_schema=self.get_schema(TION_SCHEMA))
 
@@ -153,7 +156,7 @@ class TionConfigFlow(TionFlow, config_entries.ConfigFlow, domain=DOMAIN):
                           type(e).__name__, str(e))
             return self.async_show_form(step_id='pair_failed')
 
-        return self._create_entry(title=self._data['name'], data=self._data)
+        return await self._create_entry(title=self._data['name'], data=self._data, step="pair")
 
     async def async_step_add_failed(self, input):
         _LOGGER.debug("Add failed. Returning to first step")
@@ -178,4 +181,7 @@ class TionOptionsFlowHandler(TionConfigFlow, config_entries.OptionsFlow):
         # config_entry.add_update_listener(update_listener)
 
     async def async_step_init(self, input=None):
-        return await self.async_step_user(input)
+        if input is not None:
+            return await self._create_entry(title="", data=input, step="options")
+        else:
+            return self.async_show_form(step_id="init", data_schema=self.get_schema(TION_SCHEMA))
