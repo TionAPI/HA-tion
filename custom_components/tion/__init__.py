@@ -52,9 +52,7 @@ class TionInstance(DataUpdateCoordinator):
         # delay before next update if we got btle.BTLEDisconnectError
         self._delay: int = 600
 
-        model = self.model
-
-        self.__tion: tion = self.getTion(model, self.config[CONF_MAC])
+        self.__tion: tion = self.getTion(self.model, self.config[CONF_MAC])
         self.__keep_alive = datetime.timedelta(seconds=self.__keep_alive)
         self._delay = datetime.timedelta(seconds=self._delay)
 
