@@ -73,15 +73,17 @@ class TionInstance(DataUpdateCoordinator):
 
     @property
     def config(self) -> dict:
-        config = {}
-        if hasattr(self._config_entry, 'options'):
-            if any(self._config_entry.options):
-                config = self._config_entry.options
-        if not any(config):
-            if hasattr(self._config_entry, 'data'):
-                if any(self._config_entry.data):
-                    config = self._config_entry.data
-        return config
+        try:
+            data = dict(self._config_entry.data or {})
+        except AttributeError:
+            data = {}
+
+        try:
+            options = self._config_entry.options or {}
+            data.update(options)
+        except AttributeError:
+            pass
+        return data
 
     @staticmethod
     def _decode_state(state: str) -> bool:
@@ -166,7 +168,7 @@ class TionInstance(DataUpdateCoordinator):
 
     @cached_property
     def supported_air_sources(self) -> list[str]:
-        if self.config["model"] == "S3":
+        if self.model == "S3":
             return ["outside", "mixed", "recirculation"]
         else:
             return ["outside", "recirculation"]
