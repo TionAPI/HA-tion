@@ -164,7 +164,7 @@ class TionInstance(DataUpdateCoordinator):
 
     @cached_property
     def unique_id(self):
-        return self.__tion.mac
+        return self.config[CONF_MAC]
 
     @cached_property
     def supported_air_sources(self) -> list[str]:
