@@ -71,16 +71,17 @@ class TionFlow:
 
     @property
     def config(self) -> dict:
-        config = {}
-        if hasattr(self._config_entry, 'options'):
-            if any(self._config_entry.options):
-                config = self._config_entry.options
-        if not any(config):
-            if hasattr(self._config_entry, 'data'):
-                if any(self._config_entry.data):
-                    config = self._config_entry.data
+        try:
+            data = dict(self._config_entry.data or {})
+        except AttributeError:
+            data = {}
 
-        return config
+        try:
+            options = self._config_entry.options or {}
+            data.update(options)
+        except AttributeError:
+            pass
+        return data
 
     @staticmethod
     def getTion(model: str, mac: str) -> tion:
