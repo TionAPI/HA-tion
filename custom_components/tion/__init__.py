@@ -52,12 +52,7 @@ class TionInstance(DataUpdateCoordinator):
         # delay before next update if we got btle.BTLEDisconnectError
         self._delay: int = 600
 
-        try:
-            model = self.config['model']
-        except KeyError:
-            _LOGGER.warning("Model was not found in config. Please update integration settings!")
-            _LOGGER.warning("Assume that model is S3")
-            model = 'S3'
+        model = self.model
 
         self.__tion: tion = self.getTion(model, self.config[CONF_MAC])
         self.__keep_alive = datetime.timedelta(seconds=self.__keep_alive)
@@ -173,3 +168,13 @@ class TionInstance(DataUpdateCoordinator):
         else:
             return ["outside", "recirculation"]
 
+    @cached_property
+    def model(self) -> str:
+        try:
+            model = self.config['model']
+        except KeyError:
+            _LOGGER.warning(f"Model was not found in config. "
+                            f"Please update integration settings! Config is {self.config}")
+            _LOGGER.warning("Assume that model is S3")
+            model = 'S3'
+        return model
