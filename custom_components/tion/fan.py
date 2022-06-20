@@ -46,8 +46,25 @@ class TionFan(FanEntity, CoordinatorEntity):
     _attr_preset_modes = [PRESET_NONE, PRESET_BOOST]
     _attr_speed_count = len(TionClimateEntity.attr_fan_modes())
     _attr_current_direction = DIRECTION_FORWARD
-
-    """Representation of a fan control."""
+    _mode_percent_mapping = {
+        0: 0,
+        1: 17,
+        2: 33,
+        3: 50,
+        4: 67,
+        5: 83,
+        6: 100,
+    }
+    _percent_mode_mapping = {
+        0: 0,
+        16: 1,
+        33: 2,
+        50: 3,
+        66: 4,
+        83: 5,
+        100: 6,
+    }
+    # Home Assistant is using float speed step and ceil to determinate supported speed percents.
 
     def set_preset_mode(self, preset_mode: str) -> None:
         pass
@@ -78,21 +95,27 @@ class TionFan(FanEntity, CoordinatorEntity):
         self._saved_fan_mode = None
 
         _LOGGER.debug(f"Init of fan  {self.name} ({instance.unique_id})")
+        _LOGGER.debug(f"Speed step is {self.percentage_step}")
 
     def percent2mode(self, percentage: int) -> int:
         result = 0
-        for i in range(len(TionClimateEntity.attr_fan_modes())):
-            if percentage < self.percentage_step * i:
-                break
+        try:
+            return self._percent_mode_mapping[percentage]
+        except KeyError:
+            _LOGGER.warning(f"Could not to convert {percentage} to mode with {self._percent_mode_mapping}. "
+                            f"Will use fall back method.")
+            for i in range(len(TionClimateEntity.attr_fan_modes())):
+                if percentage < self.percentage_step * i:
+                    break
+                else:
+                    result = i
             else:
-                result = i
-        else:
-            result = 6
+                result = 6
 
-        return result
+            return result
 
     def mode2percent(self) -> int | None:
-        return int(self.percentage_step * self.fan_mode) if self.fan_mode is not None else None
+        return self._mode_percent_mapping[self.fan_mode] if self.fan_mode is not None else None
 
     async def async_set_percentage(self, percentage: int) -> None:
         """Set the speed of the fan, as a percentage."""
