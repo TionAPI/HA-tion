@@ -43,6 +43,14 @@ SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
         entity_registry_enabled_default=True,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
+
+    SensorEntityDescription(
+        key="fan_speed",
+        name="current fan speed",
+        entity_registry_enabled_default=True,
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:fan",
+    ),
 )
 
 
