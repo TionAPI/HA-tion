@@ -4,9 +4,10 @@ Fan controls for Tion breezers
 from __future__ import annotations
 
 import logging
+import math
 from datetime import timedelta
 from functools import cached_property
-from typing import Any
+from typing import Any, Optional
 
 from homeassistant.components.climate.const import PRESET_BOOST, PRESET_NONE
 from homeassistant.components.fan import FanEntityDescription, FanEntity, SUPPORT_SET_SPEED, SUPPORT_PRESET_MODE, \
@@ -15,6 +16,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util.percentage import int_states_in_range, ranged_value_to_percentage, percentage_to_ranged_value
 
 from . import TionInstance
 from .climate import TionClimateEntity
@@ -46,25 +48,7 @@ class TionFan(FanEntity, CoordinatorEntity):
     _attr_preset_modes = [PRESET_NONE, PRESET_BOOST]
     _attr_speed_count = len(TionClimateEntity.attr_fan_modes())
     _attr_current_direction = DIRECTION_FORWARD
-    _mode_percent_mapping = {
-        0: 0,
-        1: 17,
-        2: 33,
-        3: 50,
-        4: 67,
-        5: 83,
-        6: 100,
-    }
-    _percent_mode_mapping = {
-        0: 0,
-        16: 1,
-        33: 2,
-        50: 3,
-        66: 4,
-        83: 5,
-        100: 6,
-    }
-    # Home Assistant is using float speed step and ceil to determinate supported speed percents.
+    _SPEEDS = (0, 6)
 
     def set_preset_mode(self, preset_mode: str) -> None:
         pass
@@ -97,29 +81,20 @@ class TionFan(FanEntity, CoordinatorEntity):
         _LOGGER.debug(f"Init of fan  {self.name} ({instance.unique_id})")
         _LOGGER.debug(f"Speed step is {self.percentage_step}")
 
-    def percent2mode(self, percentage: int) -> int:
-        result = 0
-        try:
-            return self._percent_mode_mapping[percentage]
-        except KeyError:
-            _LOGGER.warning(f"Could not to convert {percentage} to mode with {self._percent_mode_mapping}. "
-                            f"Will use fall back method.")
-            for i in range(len(TionClimateEntity.attr_fan_modes())):
-                if percentage < self.percentage_step * i:
-                    break
-                else:
-                    result = i
-            else:
-                result = 6
+    @property
+    def percentage(self) -> Optional[int]:
+        """Return the current speed percentage."""
+        return ranged_value_to_percentage(self._SPEEDS, self.fan_mode) if self.coordinator.data.get("is_on") else 0
 
-            return result
-
-    def mode2percent(self) -> int | None:
-        return self._mode_percent_mapping[self.fan_mode] if self.fan_mode is not None else None
+    @property
+    def speed_count(self) -> int:
+        """Return the number of speeds the fan supports."""
+        return int_states_in_range(self._SPEEDS)
 
     async def async_set_percentage(self, percentage: int) -> None:
         """Set the speed of the fan, as a percentage."""
-        await self.coordinator.set(fan_speed=self.percent2mode(percentage), is_on=percentage > 0)
+        await self.coordinator.set(fan_speed=math.ceil(percentage_to_ranged_value(self._SPEEDS, percentage)),
+                                   is_on=percentage > 0)
 
     @cached_property
     def boost_fan_mode(self) -> int:
@@ -156,5 +131,4 @@ class TionFan(FanEntity, CoordinatorEntity):
     def _handle_coordinator_update(self) -> None:
         self._attr_assumed_state = False if self.coordinator.last_update_success else True
         self._attr_is_on = self.coordinator.data.get("is_on")
-        self._attr_percentage = self.mode2percent() if self._attr_is_on else 0  # should check attr to avoid deadlock
         self.async_write_ha_state()
