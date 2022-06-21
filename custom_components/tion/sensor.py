@@ -89,7 +89,14 @@ class TionSensor(SensorEntity, CoordinatorEntity):
     @property
     def native_value(self):
         """Return the state of the sensor."""
-        return self.coordinator.data.get(self.entity_description.key)
+        value = self.coordinator.data.get(self.entity_description.key)
+
+        if self.entity_description.key == "fan_speed":
+            if not self.coordinator.data.get("is_on"):
+                # return zero fan speed if breezer turned off
+                value = 0
+
+        return value
 
     def _handle_coordinator_update(self) -> None:
         self._attr_assumed_state = False if self.coordinator.last_update_success else True
