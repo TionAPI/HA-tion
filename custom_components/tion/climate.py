@@ -8,7 +8,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.const import TEMP_CELSIUS
 import voluptuous as vol
 
-from homeassistant.components.climate import ClimateEntity, ClimateEntityFeature
+from homeassistant.components.climate import ClimateEntity, ClimateEntityFeature, HVACMode
 
 from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -26,7 +26,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_TARGET_TEMP): vol.Coerce(float),
         vol.Optional(CONF_KEEP_ALIVE, default=30): vol.All(cv.time_period, cv.positive_timedelta),
         vol.Optional(CONF_INITIAL_HVAC_MODE): vol.In(
-            [HVAC_MODE_FAN_ONLY, HVAC_MODE_HEAT, HVAC_MODE_OFF]
+            [HVACMode.FAN_ONLY, HVACMode.HEAT, HVACMode.OFF]
         ),
         vol.Optional(CONF_AWAY_TEMP): vol.Coerce(float),
     }
@@ -61,7 +61,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 class TionClimateEntity(ClimateEntity, CoordinatorEntity):
     """Representation of a Tion device."""
 
-    _attr_hvac_modes = [HVAC_MODE_HEAT, HVAC_MODE_FAN_ONLY, HVAC_MODE_OFF]
+    _attr_hvac_modes = [HVACMode.HEAT, HVACMode.FAN_ONLY, HVACMode.OFF]
     _attr_min_temp = 0
     _attr_max_temp = 30
     _attr_fan_modes = [1, 2, 3, 4, 5, 6]
@@ -84,7 +84,7 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
         self._away_temp = self.coordinator.away_temp
 
         # saved states
-        self._last_mode = None
+        self._last_mode: HVACMode | None = None
         self._saved_target_temp = None
         self._saved_fan_mode = None
 
@@ -103,7 +103,7 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
         self._get_current_state()
         ClimateEntity.__init__(self)
 
-    async def async_set_hvac_mode(self, hvac_mode):
+    async def async_set_hvac_mode(self, hvac_mode: HVACMode):
         """Set hvac mode."""
         _LOGGER.info("Need to set mode to %s, current mode is %s", hvac_mode, self.hvac_mode)
         if self.hvac_mode == hvac_mode:
@@ -111,21 +111,21 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
             _LOGGER.debug(f"{self.name} is asked for mode {hvac_mode}, but it is already in {self.hvac_mode}. Do "
                           f"nothing.")
             pass
-        elif hvac_mode == HVAC_MODE_OFF:
+        elif hvac_mode == HVACMode.OFF:
             # Keep last mode while turning off. May be used while calling climate turn_on service
             self._last_mode = self.hvac_mode
             await self._async_set_state(is_on=False)
 
-        elif hvac_mode == HVAC_MODE_HEAT:
+        elif hvac_mode == HVACMode.HEAT:
             saved_target_temp = self.target_temperature
             try:
                 await self.coordinator.connect()
                 await self._async_set_state(heater=True, is_on=True)
-                if self.hvac_mode == HVAC_MODE_FAN_ONLY:
+                if self.hvac_mode == HVACMode.FAN_ONLY:
                     await self.async_set_temperature(**{ATTR_TEMPERATURE: saved_target_temp})
             finally:
                 await self.coordinator.disconnect()
-        elif hvac_mode == HVAC_MODE_FAN_ONLY:
+        elif hvac_mode == HVACMode.FAN_ONLY:
             await self._async_set_state(heater=False, is_on=True)
 
         else:
@@ -223,17 +223,17 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
         Turn breezer on. Tries to restore last state. Use HEAT as backup
         """
         _LOGGER.debug(f"Turning on from {self.hvac_mode} to {self._last_mode}")
-        if self.hvac_mode != HVAC_MODE_OFF:
+        if self.hvac_mode != HVACMode.OFF:
             # do nothing if we already working
             pass
         elif self._last_mode is None:
-            await self.async_set_hvac_mode(HVAC_MODE_HEAT)
+            await self.async_set_hvac_mode(HVACMode.HEAT)
         else:
             await self.async_set_hvac_mode(self._last_mode)
 
     async def async_turn_off(self):
         _LOGGER.debug(f"Turning off from {self.hvac_mode}")
-        await self.async_set_hvac_mode(HVAC_MODE_OFF)
+        await self.async_set_hvac_mode(HVACMode.OFF)
 
     async def _async_set_state(self, **kwargs):
         await self.coordinator.set(**kwargs)
@@ -258,8 +258,8 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
             'air_mode': self.coordinator.data.get("air_mode"),
             'in_temp': self.coordinator.data.get("in_temp")
         }
-        self._attr_hvac_mode = HVAC_MODE_OFF if not self.coordinator.data.get("is_on") else \
-            HVAC_MODE_HEAT if self.coordinator.data.get("heater") else HVAC_MODE_FAN_ONLY
+        self._attr_hvac_mode = HVACMode.OFF if not self.coordinator.data.get("is_on") else \
+            HVACMode.HEAT if self.coordinator.data.get("heater") else HVACMode.FAN_ONLY
         self._attr_hvac_action = CURRENT_HVAC_OFF if not self.coordinator.data.get("is_on") else \
             CURRENT_HVAC_HEAT if self.coordinator.data.get("is_heating") else CURRENT_HVAC_FAN
 
