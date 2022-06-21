@@ -8,12 +8,11 @@ from homeassistant.core import HomeAssistant
 from homeassistant.const import TEMP_CELSIUS
 import voluptuous as vol
 
-from homeassistant.components.climate import ClimateEntity
+from homeassistant.components.climate import ClimateEntity, ClimateEntityFeature
 
 from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-
 
 from . import TionInstance
 from .const import *
@@ -71,7 +70,7 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
     _attr_temperature_unit = TEMP_CELSIUS
     _attr_preset_modes = [PRESET_NONE, PRESET_BOOST, PRESET_SLEEP]
     _attr_preset_mode = PRESET_NONE
-    _attr_supported_features = SUPPORT_FLAGS | SUPPORT_PRESET_MODE | SUPPORT_FAN_MODE
+    _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.FAN_MODE | ClimateEntityFeature.PRESET_MODE
     _attr_icon = 'mdi:air-purifier'
     _attr_fan_mode: int
     coordinator: TionInstance

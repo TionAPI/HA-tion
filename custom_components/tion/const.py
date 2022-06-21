@@ -12,9 +12,6 @@ from homeassistant.components.climate.const import (
     PRESET_BOOST,
     PRESET_SLEEP,
     PRESET_NONE,
-    SUPPORT_PRESET_MODE,
-    SUPPORT_TARGET_TEMPERATURE,
-    SUPPORT_FAN_MODE,
  )
 from homeassistant.const import (ATTR_TEMPERATURE, CONF_NAME, EVENT_HOMEASSISTANT_START, PRECISION_WHOLE, Platform, )
 from voluptuous import All, In
@@ -28,7 +25,6 @@ CONF_AWAY_TEMP = "away_temp"
 CONF_MAC = "mac"
 PLATFORMS = [Platform.SENSOR, Platform.CLIMATE, Platform.SELECT, Platform.FAN]
 SUPPORTED_DEVICES = ['S3', 'S4', 'Lite']
-SUPPORT_FLAGS = SUPPORT_TARGET_TEMPERATURE | SUPPORT_FAN_MODE
 
 TION_SCHEMA = {
     'model': {'type': All(str, In(SUPPORTED_DEVICES)), 'required': True},
