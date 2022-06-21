@@ -2,9 +2,6 @@
 from homeassistant.components.climate import PLATFORM_SCHEMA
 from homeassistant.components.climate.const import (
     ATTR_PRESET_MODE,
-    CURRENT_HVAC_FAN,
-    CURRENT_HVAC_HEAT,
-    CURRENT_HVAC_OFF,
     PRESET_AWAY,
     PRESET_BOOST,
     PRESET_SLEEP,
