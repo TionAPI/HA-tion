@@ -9,8 +9,7 @@ from functools import cached_property
 from typing import Any
 
 from homeassistant.components.climate.const import PRESET_BOOST, PRESET_NONE
-from homeassistant.components.fan import FanEntityDescription, FanEntity, SUPPORT_SET_SPEED, SUPPORT_PRESET_MODE, \
-    DIRECTION_FORWARD
+from homeassistant.components.fan import FanEntityDescription, FanEntity, DIRECTION_FORWARD, FanEntityFeature
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
@@ -42,7 +41,7 @@ async def async_setup_entry(hass: HomeAssistant, _config: ConfigEntry, async_add
 
 
 class TionFan(FanEntity, CoordinatorEntity):
-    _attr_supported_features = SUPPORT_PRESET_MODE | SUPPORT_SET_SPEED
+    _attr_supported_features = FanEntityFeature.PRESET_MODE | FanEntityFeature.SET_SPEED
     _attr_oscillating = False
     _attr_preset_modes = [PRESET_NONE, PRESET_BOOST]
     _attr_speed_count = len(TionClimateEntity.attr_fan_modes())
