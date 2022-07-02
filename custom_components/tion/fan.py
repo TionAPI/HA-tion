@@ -12,8 +12,10 @@ from homeassistant.components.climate.const import PRESET_BOOST, PRESET_NONE
 from homeassistant.components.fan import FanEntityDescription, FanEntity, SUPPORT_SET_SPEED, SUPPORT_PRESET_MODE, \
     DIRECTION_FORWARD
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import TionInstance
@@ -26,7 +28,6 @@ SCAN_INTERVAL = timedelta(seconds=30)
 
 config = FanEntityDescription(
     key="fan_speed",
-    entity_category=EntityCategory.CONFIG,
     name="fan speed",
     entity_registry_enabled_default=True,
     icon="mdi:fan",
@@ -36,7 +37,7 @@ config = FanEntityDescription(
 async def async_setup_entry(hass: HomeAssistant, _config: ConfigEntry, async_add_entities):
     """Set up the sensor entry"""
 
-    async_add_entities([TionFan(config, hass.data[DOMAIN][_config.unique_id])])
+    async_add_entities([TionFan(config, hass.data[DOMAIN][_config.unique_id], hass)])
     return True
 
 
@@ -84,7 +85,7 @@ class TionFan(FanEntity, CoordinatorEntity):
     def set_percentage(self, percentage: int) -> None:
         raise NotImplemented
 
-    def __init__(self, description: FanEntityDescription, instance: TionInstance):
+    def __init__(self, description: FanEntityDescription, instance: TionInstance, hass: HomeAssistant):
         """Initialize the fan."""
 
         CoordinatorEntity.__init__(self=self, coordinator=instance, )
@@ -96,6 +97,21 @@ class TionFan(FanEntity, CoordinatorEntity):
 
         _LOGGER.debug(f"Init of fan  {self.name} ({instance.unique_id})")
         _LOGGER.debug(f"Speed step is {self.percentage_step}")
+
+        registry = async_get_entity_registry(hass=hass)
+        entity = registry.async_get_or_create(
+            domain=Platform.FAN,
+            platform=DOMAIN,
+            unique_id=self.unique_id,
+        )
+        _LOGGER.debug(f"{entity.entity_category=}, {entity.entity_id=}, {entity.options=} {entity.unique_id=}")
+        if entity.entity_category == EntityCategory.CONFIG:
+            import attr  # pylint: disable=import-outside-toplevel
+
+            _LOGGER.debug(f"Updating {entity.entity_category=} for {entity.entity_id=}")
+            new_value = {"entity_category": None}
+            registry.entities[entity.entity_id] = attr.evolve(registry.entities[entity.entity_id], **new_value)
+            registry.async_schedule_save()
 
     def percent2mode(self, percentage: int) -> int:
         result = 0
