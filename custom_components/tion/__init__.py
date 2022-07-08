@@ -1,26 +1,20 @@
 """The Tion breezer component."""
 from __future__ import annotations
 
-import asyncio
 import datetime
-from concurrent.futures import ThreadPoolExecutor
 import logging
 import math
 from datetime import timedelta
 from functools import cached_property
 
+import tion_btle
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from tion_btle.tion import tion, MaxTriesExceededError
+from tion_btle.tion import Tion, MaxTriesExceededError
 from .const import DOMAIN, TION_SCHEMA, CONF_KEEP_ALIVE, CONF_AWAY_TEMP, CONF_MAC, PLATFORMS
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 _LOGGER = logging.getLogger(__name__)
-_BTLE_COMMAND_EXECUTOR = ThreadPoolExecutor(max_workers=1)
-
-
-async def btle_exec_helper(method, *args, **kwargs):
-    return await asyncio.wrap_future(_BTLE_COMMAND_EXECUTOR.submit(method, *args, **kwargs))
 
 
 async def async_setup(hass, config):
@@ -52,7 +46,7 @@ class TionInstance(DataUpdateCoordinator):
         # delay before next update if we got btle.BTLEDisconnectError
         self._delay: int = 600
 
-        self.__tion: tion = self.getTion(self.model, self.config[CONF_MAC])
+        self.__tion: Tion = self.getTion(self.model, self.config[CONF_MAC])
         self.__keep_alive = datetime.timedelta(seconds=self.__keep_alive)
         self._delay = datetime.timedelta(seconds=self._delay)
 
@@ -96,7 +90,7 @@ class TionInstance(DataUpdateCoordinator):
         response: dict[str, str | bool | int] = {}
 
         try:
-            response = await btle_exec_helper(self.__tion.get)
+            response = await self.__tion.get()
             self.update_interval = self.__keep_alive
 
         except MaxTriesExceededError as e:
@@ -135,28 +129,28 @@ class TionInstance(DataUpdateCoordinator):
 
         args = ', '.join('%s=%r' % x for x in kwargs.items())
         _LOGGER.info("Need to set: " + args)
-        await btle_exec_helper(self.__tion.set, kwargs)
+        await self.__tion.set(kwargs)
         self.data.update(original_args)
         for update_callback in self._listeners:
             update_callback()
 
     @staticmethod
-    def getTion(model: str, mac: str) -> tion:
+    def getTion(model: str, mac: str) -> tion_btle.TionS3 | tion_btle.TionLite | tion_btle.TionS4:
         if model == 'S3':
-            from tion_btle.s3 import S3 as Tion
+            from tion_btle.s3 import TionS3 as Breezer
         elif model == 'S4':
-            from tion_btle.s4 import S4 as Tion
+            from tion_btle.s4 import TionS4 as Breezer
         elif model == 'Lite':
-            from tion_btle.lite import Lite as Tion
+            from tion_btle.lite import TionLite as Breezer
         else:
             raise NotImplementedError("Model '%s' is not supported!" % model)
-        return Tion(mac)
+        return Breezer(mac)
 
     async def connect(self):
-        return await btle_exec_helper(self.__tion.connect)
+        return await self.__tion.connect()
 
     async def disconnect(self):
-        return await btle_exec_helper(self.__tion.disconnect)
+        return await self.__tion.disconnect()
 
     @property
     def device_info(self):
