@@ -6,11 +6,11 @@
     "fan"
   ],
   "requirements": [
-    "tion-btle==1.5.1"
+    "tion-btle==2.0.0"
   ],
   "codeowners": [
     "@IATkachenko"
   ],
   "config_flow": true,
-  "version": "2.4.0"
+  "version": "3.0.0"
 }
