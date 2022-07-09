@@ -174,3 +174,8 @@ class TionFan(FanEntity, CoordinatorEntity):
         self._attr_is_on = self.coordinator.data.get("is_on")
         self._attr_percentage = self.mode2percent() if self._attr_is_on else 0  # should check attr to avoid deadlock
         self.async_write_ha_state()
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        return True
