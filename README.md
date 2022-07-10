@@ -103,8 +103,9 @@ logger:
   default: warning
   logs:
     custom_components.tion: debug
-    tion_btle.tion: debug
-    tion_btle.s3: debug
-    tion_btle.lite: debug
+    tion_btle.Tion: debug
+    tion_btle.TiosS3: debug    
+    tion_btle.TionLite: debug
+    tion_btle.TiosS4: debug
     custom_components.tion.config_flow: debug
 ```
