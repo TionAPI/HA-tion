@@ -131,8 +131,7 @@ class TionInstance(DataUpdateCoordinator):
         _LOGGER.info("Need to set: " + args)
         await self.__tion.set(kwargs)
         self.data.update(original_args)
-        for update_callback in self._listeners:
-            update_callback()
+        self.async_update_listeners()
 
     @staticmethod
     def getTion(model: str, mac: str) -> tion_btle.TionS3 | tion_btle.TionLite | tion_btle.TionS4:
