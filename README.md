@@ -104,8 +104,8 @@ logger:
   logs:
     custom_components.tion: debug
     tion_btle.Tion: debug
-    tion_btle.TiosS3: debug    
+    tion_btle.TionS3: debug    
     tion_btle.TionLite: debug
-    tion_btle.TiosS4: debug
+    tion_btle.TionS4: debug
     custom_components.tion.config_flow: debug
 ```
