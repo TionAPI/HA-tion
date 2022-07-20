@@ -261,7 +261,7 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
         self._attr_hvac_mode = HVACMode.OFF if not self.coordinator.data.get("is_on") else \
             HVACMode.HEAT if self.coordinator.data.get("heater") else HVACMode.FAN_ONLY
         self._attr_hvac_action = HVACAction.OFF if not self.coordinator.data.get("is_on") else \
-            HVACAction.HEAT if self.coordinator.data.get("is_heating") else HVACAction.FAN
+            HVACAction.HEATING if self.coordinator.data.get("is_heating") else HVACAction.FAN
 
     @property
     def available(self) -> bool:
