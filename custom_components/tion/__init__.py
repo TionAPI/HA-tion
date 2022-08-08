@@ -51,7 +51,7 @@ class TionInstance(DataUpdateCoordinator):
         self._delay = datetime.timedelta(seconds=self._delay)
 
         if self._config_entry.unique_id is None:
-            _LOGGER.critical(f"Unique id is None for {self.config_entry.title}! "
+            _LOGGER.critical(f"Unique id is None for {self._config_entry.title}! "
                              f"Will fix it by using {self.unique_id}")
             hass.config_entries.async_update_entry(
                 entry=self._config_entry,
