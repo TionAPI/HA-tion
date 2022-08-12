@@ -136,7 +136,7 @@ class TionConfigFlow(TionFlow, config_entries.ConfigFlow, domain=DOMAIN):
                 _LOGGER.debug("Going create entry with name %s" % input['name'])
                 _LOGGER.debug(input)
                 try:
-                    _tion: tion = self.getTion(input['model'], input['mac'])
+                    _tion: Tion = self.getTion(input['model'], input['mac'])
                     result = _tion.get()
                 except Exception as e:
                     _LOGGER.error("Could not get data from breezer. result is %s, error: %s" % (result, str(e)))
@@ -152,7 +152,7 @@ class TionConfigFlow(TionFlow, config_entries.ConfigFlow, domain=DOMAIN):
         result = {}
         try:
             _LOGGER.debug(self._data)
-            _tion: tion = self.getTion(self._data['model'], self._data['mac'])
+            _tion: Tion = self.getTion(self._data['model'], self._data['mac'])
             await _tion.pair()
             # We should sleep a bit, because immediately connection will cause device disconnected exception while
             # enabling notifications
