@@ -153,12 +153,12 @@ class TionConfigFlow(TionFlow, config_entries.ConfigFlow, domain=DOMAIN):
         try:
             _LOGGER.debug(self._data)
             _tion: tion = self.getTion(self._data['model'], self._data['mac'])
-            _tion.pair()
+            await _tion.pair()
             # We should sleep a bit, because immediately connection will cause device disconnected exception while
             # enabling notifications
             time.sleep(3)
 
-            result = _tion.get()
+            result = await _tion.get()
         except Exception as e:
             _LOGGER.error("Cannot pair and get data. Data is %s, result is %s; %s: %s", self._data, result,
                           type(e).__name__, str(e))
