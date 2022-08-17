@@ -4,5 +4,5 @@
   "render_readme": true,
   "zip_release": true,
   "filename": "ha_tion_btle.zip",
-  "homeassistant":  "2022.7.0"
+  "homeassistant":  "2022.8.0"
 }
