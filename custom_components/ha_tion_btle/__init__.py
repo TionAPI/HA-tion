@@ -130,9 +130,8 @@ class TionInstance(DataUpdateCoordinator):
         args = ', '.join('%s=%r' % x for x in kwargs.items())
         _LOGGER.info("Need to set: " + args)
         await self.__tion.set(kwargs)
-        state = self.data.copy() if self.data is not None else {}
-        state.update(original_args)
-        self.async_set_updated_data(state)
+        self.data.update(original_args)
+        self.async_update_listeners()
 
     @staticmethod
     def getTion(model: str, mac: str) -> tion_btle.TionS3 | tion_btle.TionLite | tion_btle.TionS4:
