@@ -37,6 +37,8 @@ class TionInstance(DataUpdateCoordinator):
 
         self._config_entry: ConfigEntry = config_entry
 
+        assert self.config[CONF_MAC] is not None
+
         self.__keep_alive: int = 60
         try:
             self.__keep_alive = self.config[CONF_KEEP_ALIVE]
