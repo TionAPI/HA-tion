@@ -102,10 +102,10 @@ For turning on debug  log level you may use following logger settings in configu
 logger:
   default: warning
   logs:
-    custom_components.tion: debug
-    tion_btle.Tion: debug
-    tion_btle.TionS3: debug    
-    tion_btle.TionLite: debug
-    tion_btle.TionS4: debug
-    custom_components.tion.config_flow: debug
+    custom_components.ha_tion_btle: debug
+    tion_btle.tion: debug
+    tion_btle.s3: debug    
+    tion_btle.lite: debug
+    tion_btle.s4: debug
+    custom_components.ha_tion_btle.config_flow: debug
 ```
