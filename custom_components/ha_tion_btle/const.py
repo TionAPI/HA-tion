@@ -9,7 +9,7 @@ from homeassistant.components.climate.const import (
  )
 from homeassistant.const import (ATTR_TEMPERATURE, CONF_NAME, EVENT_HOMEASSISTANT_START, PRECISION_WHOLE, Platform, )
 from voluptuous import All, In
-DOMAIN = 'tion'
+DOMAIN = 'ha_tion_btle'
 DEFAULT_NAME = "Tion Breezer"
 
 CONF_TARGET_TEMP = "target_temp"

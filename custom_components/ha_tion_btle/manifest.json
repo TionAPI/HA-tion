@@ -1,5 +1,5 @@
 {
-  "domain": "tion",
+  "domain": "ha_tion_btle",
   "name": "Tion breezer",
   "documentation": "https://github.com/TionAPI/HA-tion/wiki",
   "dependencies": [

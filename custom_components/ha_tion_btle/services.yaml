@@ -3,7 +3,7 @@ set_air_source:
   description: Set air source
   target:
     device:
-      integration: tion
+      integration: ha_tion_btle
   fields:
     source:
       name: Air source
