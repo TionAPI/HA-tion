@@ -1,6 +1,7 @@
 """The Tion breezer component."""
 from __future__ import annotations
 
+from bleak.backends.device import BLEDevice
 import datetime
 import logging
 import math
@@ -8,6 +9,7 @@ from datetime import timedelta
 from functools import cached_property
 
 import tion_btle
+from homeassistant.components import bluetooth
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from tion_btle.tion import Tion, MaxTriesExceededError
 from .const import DOMAIN, TION_SCHEMA, CONF_KEEP_ALIVE, CONF_AWAY_TEMP, CONF_MAC, PLATFORMS
@@ -38,6 +40,8 @@ class TionInstance(DataUpdateCoordinator):
         self._config_entry: ConfigEntry = config_entry
 
         assert self.config[CONF_MAC] is not None
+        # https://developers.home-assistant.io/docs/network_discovery/#fetching-the-bleak-bledevice-from-the-address
+        btle_device = bluetooth.async_ble_device_from_address(hass, self.config[CONF_MAC])
 
         self.__keep_alive: int = 60
         try:
@@ -48,7 +52,7 @@ class TionInstance(DataUpdateCoordinator):
         # delay before next update if we got btle.BTLEDisconnectError
         self._delay: int = 600
 
-        self.__tion: Tion = self.getTion(self.model, self.config[CONF_MAC])
+        self.__tion: Tion = self.getTion(self.model, btle_device)
         self.__keep_alive = datetime.timedelta(seconds=self.__keep_alive)
         self._delay = datetime.timedelta(seconds=self._delay)
 
@@ -136,7 +140,7 @@ class TionInstance(DataUpdateCoordinator):
         self.async_update_listeners()
 
     @staticmethod
-    def getTion(model: str, mac: str) -> tion_btle.TionS3 | tion_btle.TionLite | tion_btle.TionS4:
+    def getTion(model: str, mac: str | BLEDevice) -> tion_btle.TionS3 | tion_btle.TionLite | tion_btle.TionS4:
         if model == 'S3':
             from tion_btle.s3 import TionS3 as Breezer
         elif model == 'S4':

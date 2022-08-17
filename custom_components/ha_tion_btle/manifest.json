@@ -3,10 +3,11 @@
   "name": "Tion breezer",
   "documentation": "https://github.com/TionAPI/HA-tion/wiki",
   "dependencies": [
+    "bluetooth",
     "fan"
   ],
   "requirements": [
-    "tion-btle==3.1.0"
+    "tion-btle==3.2.0"
   ],
   "codeowners": [
     "@IATkachenko"
