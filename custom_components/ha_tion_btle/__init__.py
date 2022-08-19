@@ -10,11 +10,12 @@ from functools import cached_property
 
 import tion_btle
 from homeassistant.components import bluetooth
+from homeassistant.components.bluetooth import BluetoothCallbackMatcher
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from tion_btle.tion import Tion, MaxTriesExceededError
 from .const import DOMAIN, TION_SCHEMA, CONF_KEEP_ALIVE, CONF_AWAY_TEMP, CONF_MAC, PLATFORMS
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -28,7 +29,17 @@ async def async_setup_entry(hass, config_entry: ConfigEntry):
 
     hass.data.setdefault(DOMAIN, {})
 
-    hass.data[DOMAIN][config_entry.unique_id] = TionInstance(hass, config_entry)
+    instance = TionInstance(hass, config_entry)
+    hass.data[DOMAIN][config_entry.unique_id] = instance
+    config_entry.async_on_unload(
+        bluetooth.async_register_callback(
+            hass=hass,
+            callback=instance.update_btle_device,
+            match_dict=BluetoothCallbackMatcher(address=instance.config[CONF_MAC]),
+            mode=bluetooth.BluetoothScanningMode.ACTIVE,
+        )
+    )
+
     await hass.data[DOMAIN][config_entry.unique_id].async_config_entry_first_refresh()
     hass.config_entries.async_setup_platforms(config_entry, PLATFORMS)
     return True
@@ -186,3 +197,13 @@ class TionInstance(DataUpdateCoordinator):
             _LOGGER.warning("Assume that model is S3")
             model = 'S3'
         return model
+
+    @callback
+    def update_btle_device(
+            self,
+            service_info: bluetooth.BluetoothServiceInfoBleak,
+            _change: bluetooth.BluetoothChange
+    ) -> None:
+        _LOGGER.info(f"update_btle_device called with {service_info=}, {_change=}")
+        if service_info.device is not None:
+            self.__tion.update_btle_device(service_info.device)
