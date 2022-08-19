@@ -11,6 +11,7 @@ from functools import cached_property
 import tion_btle
 from homeassistant.components import bluetooth
 from homeassistant.components.bluetooth import BluetoothCallbackMatcher
+from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from tion_btle.tion import Tion, MaxTriesExceededError
 from .const import DOMAIN, TION_SCHEMA, CONF_KEEP_ALIVE, CONF_AWAY_TEMP, CONF_MAC, PLATFORMS
@@ -53,6 +54,8 @@ class TionInstance(DataUpdateCoordinator):
         assert self.config[CONF_MAC] is not None
         # https://developers.home-assistant.io/docs/network_discovery/#fetching-the-bleak-bledevice-from-the-address
         btle_device = bluetooth.async_ble_device_from_address(hass, self.config[CONF_MAC])
+        if btle_device is None:
+            raise ConfigEntryNotReady
 
         self.__keep_alive: int = 60
         try:
