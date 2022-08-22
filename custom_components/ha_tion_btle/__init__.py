@@ -119,7 +119,7 @@ class TionInstance(DataUpdateCoordinator):
             self.update_interval = self._delay
             raise UpdateFailed("MaxTriesExceededError")
         except Exception as e:
-            _LOGGER.critical(f"{response=}")
+            _LOGGER.critical(f"{response=}, {e=}")
             raise e
 
         response["is_on"]: bool = self._decode_state(response["state"])
