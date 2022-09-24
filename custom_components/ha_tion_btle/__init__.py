@@ -69,6 +69,7 @@ class TionInstance(DataUpdateCoordinator):
         self.__tion: Tion = self.getTion(self.model, btle_device)
         self.__keep_alive = datetime.timedelta(seconds=self.__keep_alive)
         self._delay = datetime.timedelta(seconds=self._delay)
+        self.rssi: int = 0
 
         if self._config_entry.unique_id is None:
             _LOGGER.critical(f"Unique id is None for {self._config_entry.title}! "
@@ -127,6 +128,7 @@ class TionInstance(DataUpdateCoordinator):
         response["is_heating"] = self._decode_state(response["heating"])
         response["filter_remain"] = math.ceil(response["filter_remain"])
         response["fan_speed"] = int(response["fan_speed"])
+        response["rssi"] = self.rssi
 
         self.logger.debug(f"Result is {response}")
         return response
@@ -209,4 +211,5 @@ class TionInstance(DataUpdateCoordinator):
     ) -> None:
         _LOGGER.info(f"update_btle_device called with {service_info=}, {_change=}")
         if service_info.device is not None:
+            self.rssi = service_info.rssi
             self.__tion.update_btle_device(service_info.device)
