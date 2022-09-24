@@ -209,7 +209,6 @@ class TionInstance(DataUpdateCoordinator):
             service_info: bluetooth.BluetoothServiceInfoBleak,
             _change: bluetooth.BluetoothChange
     ) -> None:
-        _LOGGER.info(f"update_btle_device called with {service_info=}, {_change=}")
         if service_info.device is not None:
             self.rssi = service_info.rssi
             self.__tion.update_btle_device(service_info.device)
