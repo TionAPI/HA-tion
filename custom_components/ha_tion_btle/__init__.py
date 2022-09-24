@@ -36,7 +36,7 @@ async def async_setup_entry(hass, config_entry: ConfigEntry):
         bluetooth.async_register_callback(
             hass=hass,
             callback=instance.update_btle_device,
-            match_dict=BluetoothCallbackMatcher(address=instance.config[CONF_MAC]),
+            match_dict=BluetoothCallbackMatcher(address=instance.config[CONF_MAC], connectable=True),
             mode=bluetooth.BluetoothScanningMode.ACTIVE,
         )
     )
@@ -53,7 +53,7 @@ class TionInstance(DataUpdateCoordinator):
 
         assert self.config[CONF_MAC] is not None
         # https://developers.home-assistant.io/docs/network_discovery/#fetching-the-bleak-bledevice-from-the-address
-        btle_device = bluetooth.async_ble_device_from_address(hass, self.config[CONF_MAC])
+        btle_device = bluetooth.async_ble_device_from_address(hass, self.config[CONF_MAC], connectable=True)
         if btle_device is None:
             raise ConfigEntryNotReady
 
