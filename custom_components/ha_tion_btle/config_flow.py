@@ -9,8 +9,9 @@ import tion_btle
 import voluptuous as vol
 
 from homeassistant import config_entries
+from homeassistant.components import bluetooth
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import callback
+from homeassistant.core import callback, async_get_hass
 from tion_btle.tion import Tion
 
 from .const import DOMAIN, TION_SCHEMA, CONF_MAC
@@ -93,6 +94,8 @@ class TionFlow:
 
     @staticmethod
     def getTion(model: str, mac: str) -> tion_btle.TionS3 | tion_btle.TionLite | tion_btle.TionS4:
+
+        btle_device = bluetooth.async_ble_device_from_address(hass=async_get_hass(), address=mac, connectable=True)
         if model == 'S3':
             from tion_btle.s3 import TionS3 as Breezer
         elif model == 'S4':
@@ -101,7 +104,7 @@ class TionFlow:
             from tion_btle.lite import TionLite as Breezer
         else:
             raise NotImplementedError("Model '%s' is not supported!" % model)
-        return Breezer(mac)
+        return Breezer(btle_device)
 
 
 class TionConfigFlow(TionFlow, config_entries.ConfigFlow, domain=DOMAIN):
