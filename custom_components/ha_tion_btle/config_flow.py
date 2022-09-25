@@ -5,6 +5,7 @@ import logging
 import datetime
 import time
 
+import bleak
 import tion_btle
 import voluptuous as vol
 
@@ -96,6 +97,11 @@ class TionFlow:
     def getTion(model: str, mac: str) -> tion_btle.TionS3 | tion_btle.TionLite | tion_btle.TionS4:
 
         btle_device = bluetooth.async_ble_device_from_address(hass=async_get_hass(), address=mac, connectable=True)
+        if btle_device is None:
+            message = f"Could not find device with {mac=}"
+            _LOGGER.critical(f"getTion: {message}")
+            raise bleak.BleakError(message)
+
         if model == 'S3':
             from tion_btle.s3 import TionS3 as Breezer
         elif model == 'S4':
