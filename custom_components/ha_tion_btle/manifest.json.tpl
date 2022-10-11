@@ -7,7 +7,7 @@
     "fan"
   ],
   "requirements": [
-    "tion-btle==3.3.5"
+    "tion-btle==3.3.6"
   ],
   "codeowners": [
     "@IATkachenko"
