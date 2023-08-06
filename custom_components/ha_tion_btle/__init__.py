@@ -179,7 +179,7 @@ class TionInstance(DataUpdateCoordinator):
     @property
     def device_info(self):
         info = {"identifiers": {(DOMAIN, self.unique_id)}, "name": self.name, "manufacturer": "Tion",
-                "model": self.data.get("model"), "type": None}
+                "model": self.data.get("model")}
         if self.data.get("fw_version") is not None:
             info['sw_version'] = self.data.get("fw_version")
         return info
