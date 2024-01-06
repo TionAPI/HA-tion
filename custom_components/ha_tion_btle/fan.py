@@ -44,7 +44,7 @@ class TionFan(FanEntity, CoordinatorEntity):
     _attr_supported_features = FanEntityFeature.PRESET_MODE | FanEntityFeature.SET_SPEED
     _attr_oscillating = False
     _attr_preset_modes = [PRESET_NONE, PRESET_BOOST]
-    _attr_speed_count = len(TionClimateEntity.attr_fan_modes())
+    _attr_speed_count = 6  # Must be synced with TionClimateEntity._attr_fan_modes
     _attr_current_direction = DIRECTION_FORWARD
     _mode_percent_mapping = {
         0: 0,
