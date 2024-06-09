@@ -58,9 +58,11 @@ class TionFan(FanEntity, CoordinatorEntity):
     _percent_mode_mapping = {
         0: 0,
         16: 1,
+        17: 1,
         33: 2,
         50: 3,
         66: 4,
+        67: 4,
         83: 5,
         100: 6,
     }
