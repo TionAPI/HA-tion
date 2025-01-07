@@ -5,7 +5,7 @@ import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.const import TEMP_CELSIUS
+from homeassistant.const import UnitOfTemperature
 import voluptuous as vol
 
 from homeassistant.components.climate import ClimateEntity, ClimateEntityFeature, HVACMode, HVACAction
@@ -67,7 +67,7 @@ class TionClimateEntity(ClimateEntity, CoordinatorEntity):
     _attr_fan_modes = [1, 2, 3, 4, 5, 6]
     _attr_precision = PRECISION_WHOLE
     _attr_target_temperature_step = 1
-    _attr_temperature_unit = TEMP_CELSIUS
+    _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_preset_modes = [PRESET_NONE, PRESET_BOOST, PRESET_SLEEP]
     _attr_preset_mode = PRESET_NONE
     _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.FAN_MODE | ClimateEntityFeature.PRESET_MODE
