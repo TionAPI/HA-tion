@@ -33,13 +33,13 @@ jobs:
       - name: Commit version
         id: commit_version
         run: |
-          git commit -m "chore(release): ${{ github.event.inputs.tag }}" custom_components/ha_tion_btle/manifest.json || true
+          git commit -m "chore(release): ${{ github.event.inputs.tag }}" custom_components/ha_tion_btle/manifest.json
 
       - name: Update
         id: update_tag
         run: |
-          git push origin main && \
-          git tag -f -a -m "v${{ github.event.inputs.tag }}" v${{ github.event.inputs.tag }} && git push -f --tags || true
+          git push origin master && \
+          git tag -f -a -m "v${{ github.event.inputs.tag }}" v${{ github.event.inputs.tag }} && git push -f --tags
 
   release:
     name: "Create release"
