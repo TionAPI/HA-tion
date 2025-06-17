@@ -43,10 +43,8 @@ async def async_setup_entry(hass, config_entry: ConfigEntry):
 
     await hass.data[DOMAIN][config_entry.unique_id].async_config_entry_first_refresh()
 
-    result = True
-    for platform in PLATFORMS:
-        result = result & await hass.config_entries.async_forward_entry_setup(entry=config_entry, domain=platform)
-    return result
+    await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
+    return True
 
 
 class TionInstance(DataUpdateCoordinator):
